@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\ListingStoreController;
 use App\Http\Controllers\Api\V1\ListingUpdateController;
 use App\Http\Controllers\Api\V1\LoginController;
 use App\Http\Controllers\Api\V1\LogoutController;
+use App\Http\Controllers\Api\V1\MyTrustController;
 use App\Http\Controllers\Api\V1\RefreshTokenController;
 use App\Http\Controllers\Api\V1\RegisterController;
 use App\Http\Controllers\Api\V1\ResendVerificationController;
@@ -26,6 +27,7 @@ use App\Http\Controllers\Api\V1\StudyGroupStoreController;
 use App\Http\Controllers\Api\V1\StudyGroupUpdateController;
 use App\Http\Controllers\Api\V1\UpdateProfileController;
 use App\Http\Controllers\Api\V1\UserSearchController;
+use App\Http\Controllers\Api\V1\UserTrustController;
 use App\Http\Controllers\Api\V1\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
@@ -55,7 +57,9 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::put('me/courses/{course}', EnrollmentStoreController::class)->name('me.courses.store');
         Route::delete('me/courses/{course}', EnrollmentDestroyController::class)->name('me.courses.destroy');
 
+        Route::get('me/trust', MyTrustController::class)->name('me.trust');
         Route::get('users', UserSearchController::class)->name('users.search');
+        Route::get('users/{user}/trust', UserTrustController::class)->name('users.trust');
         Route::get('courses', CourseIndexController::class)->name('courses.index');
 
         Route::prefix('listings')->name('listings.')->group(function (): void {

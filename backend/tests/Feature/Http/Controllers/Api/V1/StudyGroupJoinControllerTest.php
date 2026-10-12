@@ -75,4 +75,16 @@ class StudyGroupJoinControllerTest extends TestCase
             ->putJson(route('api.v1.study-groups.join', $group))
             ->assertForbidden();
     }
+
+    public function test_joining_a_group_records_an_engagement_event_once(): void
+    {
+        $group = StudyGroup::factory()->create(['capacity' => 4]);
+        $user = User::factory()->create();
+        $token = JWTAuth::fromUser($user);
+
+        $this->withToken($token)->putJson(route('api.v1.study-groups.join', $group))->assertOk();
+        $this->withToken($token)->putJson(route('api.v1.study-groups.join', $group))->assertOk();
+
+        $this->assertSame(1, $user->trustEvents()->where('type', 'group_joined')->count());
+    }
 }

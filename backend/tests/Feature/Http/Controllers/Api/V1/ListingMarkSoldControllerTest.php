@@ -76,4 +76,19 @@ class ListingMarkSoldControllerTest extends TestCase
             ->postJson(route('api.v1.listings.sold', $listing), ['buyer_id' => User::factory()->create()->id])
             ->assertConflict();
     }
+
+    public function test_closing_the_sale_records_trust_events_for_seller_and_buyer(): void
+    {
+        $listing = Listing::factory()->create();
+        $buyer = User::factory()->create();
+
+        $this->withToken(JWTAuth::fromUser($listing->seller))
+            ->postJson(route('api.v1.listings.sold', $listing), ['buyer_id' => $buyer->id])
+            ->assertOk();
+
+        $this->assertDatabaseHas('trust_events', ['user_id' => $listing->seller_id, 'type' => 'sale_completed', 'subject_id' => $listing->id]);
+        $this->assertDatabaseHas('trust_events', ['user_id' => $buyer->id, 'type' => 'purchase_completed', 'subject_id' => $listing->id]);
+        $this->assertSame(545, $listing->seller->refresh()->trust_score);
+        $this->assertSame(535, $buyer->refresh()->trust_score);
+    }
 }

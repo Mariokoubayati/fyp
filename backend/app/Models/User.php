@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
@@ -20,6 +21,15 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
     use HasFactory, Notifiable;
 
     /**
+     * Default attribute values; mirrors the database default for new accounts.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'trust_score' => 500,
+    ];
+
+    /**
      * The courses the student is enrolled in this semester.
      *
      * @return BelongsToMany<Course, $this>
@@ -27,6 +37,22 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
     public function courses(): BelongsToMany
     {
         return $this->belongsToMany(Course::class)->withTimestamps();
+    }
+
+    /**
+     * @return HasMany<TrustEvent, $this>
+     */
+    public function trustEvents(): HasMany
+    {
+        return $this->hasMany(TrustEvent::class);
+    }
+
+    /**
+     * @return HasMany<TrustScoreLog, $this>
+     */
+    public function trustScoreLogs(): HasMany
+    {
+        return $this->hasMany(TrustScoreLog::class);
     }
 
     /**
@@ -58,6 +84,7 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'study_year' => 'integer',
+            'trust_score' => 'integer',
         ];
     }
 }
