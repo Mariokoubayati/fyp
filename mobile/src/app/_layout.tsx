@@ -13,6 +13,8 @@ function RootStack() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="edit-profile" options={{ headerShown: true, title: 'Edit profile' }} />
         <Stack.Screen name="courses" options={{ headerShown: true, title: 'My courses' }} />
+        <Stack.Screen name="study-group/new" options={{ headerShown: true, title: 'New study group' }} />
+        <Stack.Screen name="study-group/[id]" options={{ headerShown: true, title: 'Study group' }} />
       </Stack.Protected>
       <Stack.Protected guard={!user}>
         <Stack.Screen name="sign-in" />

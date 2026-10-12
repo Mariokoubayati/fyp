@@ -45,3 +45,27 @@ export interface ApiErrorBody {
   message?: string;
   errors?: Record<string, string[]>;
 }
+
+export interface StudyGroup {
+  id: number;
+  title: string;
+  description: string | null;
+  location: string | null;
+  starts_at: string;
+  capacity: number;
+  members_count: number;
+  is_full: boolean;
+  is_member: boolean;
+  is_creator: boolean;
+  course?: Course;
+  creator?: { id: number; name: string };
+}
+
+export interface NewStudyGroup {
+  course_id: number;
+  title: string;
+  description: string | null;
+  location: string | null;
+  starts_at: string;
+  capacity: number;
+}
