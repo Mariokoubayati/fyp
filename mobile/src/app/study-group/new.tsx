@@ -1,18 +1,19 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { getErrorMessage, getFieldErrors } from '@/api/errors';
 import { fetchMyCourses } from '@/api/courses';
 import { createStudyGroup } from '@/api/studyGroups';
 import { Course } from '@/api/types';
 import { Button } from '@/components/Button';
+import { ChipGroup } from '@/components/ChipGroup';
 import { Input } from '@/components/Input';
 import { Loading } from '@/components/Loading';
 import { Screen } from '@/components/Screen';
 import { formatDateTime } from '@/lib/format';
-import { colors, radius, spacing, typography } from '@/theme';
+import { colors, spacing, typography } from '@/theme';
 
 function defaultStart(): Date {
   const date = new Date();
@@ -95,19 +96,7 @@ export default function NewStudyGroup() {
   return (
     <Screen scroll safeArea={false}>
       <Text style={styles.label}>Course</Text>
-      <View style={styles.chips}>
-        {courses.map((course) => (
-          <Pressable
-            key={course.id}
-            accessibilityRole="button"
-            accessibilityState={{ selected: course.id === courseId }}
-            onPress={() => setCourseId(course.id)}
-            style={[styles.chip, course.id === courseId && styles.chipSelected]}
-          >
-            <Text style={[styles.chipText, course.id === courseId && styles.chipTextSelected]}>{course.code}</Text>
-          </Pressable>
-        ))}
-      </View>
+      <ChipGroup options={courses.map((course) => ({ value: course.id, label: course.code }))} value={courseId} onChange={setCourseId} />
       {fieldErrors.course_id ? <Text style={styles.error}>{fieldErrors.course_id}</Text> : null}
 
       <Input label="Title" value={title} onChangeText={setTitle} error={fieldErrors.title} />
@@ -165,18 +154,6 @@ export default function NewStudyGroup() {
 const styles = StyleSheet.create({
   label: { ...typography.caption, fontWeight: '600', marginBottom: spacing.xs },
   gap: { marginVertical: spacing.sm },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
-  chip: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  chipSelected: { borderColor: colors.primary, backgroundColor: colors.primary },
-  chipText: { ...typography.body, fontSize: 14 },
-  chipTextSelected: { color: colors.onPrimary, fontWeight: '600' },
   when: { flexDirection: 'row', gap: spacing.sm },
   description: { minHeight: 96, paddingTop: spacing.sm, textAlignVertical: 'top' },
   error: { ...typography.caption, color: colors.danger, marginBottom: spacing.md },

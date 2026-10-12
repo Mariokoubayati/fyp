@@ -69,3 +69,39 @@ export interface NewStudyGroup {
   starts_at: string;
   capacity: number;
 }
+
+export type ListingCategory = 'books' | 'notes' | 'electronics' | 'supplies' | 'other';
+export type ListingCondition = 'new' | 'like_new' | 'good' | 'fair';
+export type ListingStatus = 'available' | 'reserved' | 'sold';
+
+export interface Listing {
+  id: number;
+  title: string;
+  description: string | null;
+  price: number;
+  category: ListingCategory;
+  condition: ListingCondition;
+  status: ListingStatus;
+  sold_at: string | null;
+  created_at: string;
+  is_seller: boolean;
+  course?: Course | null;
+  seller?: { id: number; name: string };
+}
+
+export interface NewListing {
+  title: string;
+  description: string | null;
+  price: number;
+  category: ListingCategory;
+  condition: ListingCondition;
+  course_id: number | null;
+}
+
+/** Another student as shown in pickers: no email. */
+export interface Student {
+  id: number;
+  name: string;
+  major: string | null;
+  study_year: number | null;
+}
