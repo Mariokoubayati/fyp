@@ -1,12 +1,15 @@
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { resendVerificationEmail } from '@/api/auth';
+import { fetchMyTrust } from '@/api/loans';
+import { TrustSummary } from '@/api/types';
 import { getErrorMessage } from '@/api/errors';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Screen } from '@/components/Screen';
+import { TrustCard } from '@/components/TrustCard';
 import { useAuth } from '@/context/AuthContext';
 import { colors, spacing, typography } from '@/theme';
 
@@ -14,6 +17,15 @@ export default function Profile() {
   const { user, signOut } = useAuth();
   const [resendMessage, setResendMessage] = useState<string | null>(null);
   const [resending, setResending] = useState(false);
+  const [trust, setTrust] = useState<TrustSummary | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchMyTrust()
+        .then(setTrust)
+        .catch(() => setTrust(null));
+    }, []),
+  );
 
   async function handleResend() {
     setResending(true);
@@ -38,6 +50,8 @@ export default function Profile() {
         {details ? <Text style={typography.body}>{details}</Text> : null}
         {user?.bio ? <Text style={typography.body}>{user.bio}</Text> : null}
       </Card>
+
+      {trust ? <TrustCard trust={trust} /> : null}
 
       {user && !user.email_verified_at ? (
         <Card style={[styles.card, styles.banner]}>
