@@ -5,6 +5,12 @@ use App\Http\Controllers\Api\V1\CurrentUserController;
 use App\Http\Controllers\Api\V1\EnrollmentDestroyController;
 use App\Http\Controllers\Api\V1\EnrollmentIndexController;
 use App\Http\Controllers\Api\V1\EnrollmentStoreController;
+use App\Http\Controllers\Api\V1\ListingDestroyController;
+use App\Http\Controllers\Api\V1\ListingIndexController;
+use App\Http\Controllers\Api\V1\ListingMarkSoldController;
+use App\Http\Controllers\Api\V1\ListingShowController;
+use App\Http\Controllers\Api\V1\ListingStoreController;
+use App\Http\Controllers\Api\V1\ListingUpdateController;
 use App\Http\Controllers\Api\V1\LoginController;
 use App\Http\Controllers\Api\V1\LogoutController;
 use App\Http\Controllers\Api\V1\RefreshTokenController;
@@ -49,6 +55,16 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::delete('me/courses/{course}', EnrollmentDestroyController::class)->name('me.courses.destroy');
 
         Route::get('courses', CourseIndexController::class)->name('courses.index');
+
+        Route::prefix('listings')->name('listings.')->group(function (): void {
+            Route::get('/', ListingIndexController::class)->name('index');
+            Route::get('{listing}', ListingShowController::class)->name('show');
+            Route::patch('{listing}', ListingUpdateController::class)->name('update');
+            Route::delete('{listing}', ListingDestroyController::class)->name('destroy');
+            Route::post('{listing}/sold', ListingMarkSoldController::class)->name('sold');
+
+            Route::post('/', ListingStoreController::class)->middleware('verified')->name('store');
+        });
 
         Route::prefix('study-groups')->name('study-groups.')->group(function (): void {
             Route::get('/', StudyGroupIndexController::class)->name('index');

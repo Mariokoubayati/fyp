@@ -67,6 +67,12 @@ Base path: `/api/v1`. Authenticated routes need `Authorization: Bearer <token>`.
 | DELETE | `/study-groups/{id}` | creator | Cancel a group |
 | PUT | `/study-groups/{id}/membership` | verified | Join (409 when full or already started) |
 | DELETE | `/study-groups/{id}/membership` | yes | Leave (the creator cannot leave) |
+| GET | `/listings` | yes | Available listings (`?search=`, `?category=`, `?course_id=`, `?max_price=`) or `?mine=1` |
+| POST | `/listings` | verified | Put an item up for sale |
+| GET | `/listings/{id}` | yes | One listing |
+| PATCH | `/listings/{id}` | seller | Edit; status may be `available` or `reserved` |
+| DELETE | `/listings/{id}` | seller | Take it down |
+| POST | `/listings/{id}/sold` | seller | Close the sale, body `buyer_id` |
 
 Routes marked *verified* need a confirmed university email (403 otherwise). Success responses are wrapped in `data`. Errors return `message` (and `errors` for validation failures).
 
