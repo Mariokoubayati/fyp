@@ -70,6 +70,13 @@ Base path: `/api/v1`. Authenticated routes need `Authorization: Bearer <token>`.
 | GET | `/me/trust` | yes | Your score, tier, component breakdown and history |
 | GET | `/users/{id}/trust` | yes | Another student's `score`, `tier`, `max_loan` |
 | GET | `/users?search=` | yes | Find students by name (id, name, major only) |
+| GET | `/loans` | yes | Open requests from others; `?role=borrowed` or `?role=lent` for your own |
+| POST | `/loans` | verified | Request a loan (capped by your trust tier, $5-$100, due within 60 days) |
+| GET | `/loans/{id}` | party / open | One loan |
+| POST | `/loans/{id}/accept` | verified | Fund an open request |
+| POST | `/loans/{id}/confirm-handover` | party | Confirm the cash changed hands (loan goes active when both did) |
+| POST | `/loans/{id}/confirm-repayment` | party | Confirm repayment (loan closes when both did; writes a trust event) |
+| POST | `/loans/{id}/cancel` | party | Withdraw a request or drop an accepted loan |
 | GET | `/listings` | yes | Available listings (`?search=`, `?category=`, `?course_id=`, `?max_price=`) or `?mine=1` |
 | POST | `/listings` | verified | Put an item up for sale |
 | GET | `/listings/{id}` | yes | One listing |
@@ -78,6 +85,16 @@ Base path: `/api/v1`. Authenticated routes need `Authorization: Bearer <token>`.
 | POST | `/listings/{id}/sold` | seller | Close the sale, body `buyer_id` |
 
 Routes marked *verified* need a confirmed university email (403 otherwise). Success responses are wrapped in `data`. Errors return `message` (and `errors` for validation failures).
+
+## Lending and trust
+
+UniCircle is a ledger: no money moves through the app. A loan goes `requested -> accepted -> active -> repaid`,
+or `active -> overdue -> defaulted` (and still `-> repaid` late). All transitions go through `LoanStateMachine`.
+`php artisan loans:process-due` (scheduled daily) moves unpaid loans to overdue/defaulted and writes trust events.
+
+The trust score is rule-based and explainable (`config/trust.php`): baseline 500 plus five capped components
+(repayment 40%, marketplace 20%, vouches 15%, account 10%, engagement 15%), clamped to 0-1000.
+Tiers: below 400 no borrowing, 400-699 up to $20, 700+ up to $100.
 
 ## Branch and review rules
 

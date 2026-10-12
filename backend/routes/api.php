@@ -11,6 +11,13 @@ use App\Http\Controllers\Api\V1\ListingMarkSoldController;
 use App\Http\Controllers\Api\V1\ListingShowController;
 use App\Http\Controllers\Api\V1\ListingStoreController;
 use App\Http\Controllers\Api\V1\ListingUpdateController;
+use App\Http\Controllers\Api\V1\LoanAcceptController;
+use App\Http\Controllers\Api\V1\LoanCancelController;
+use App\Http\Controllers\Api\V1\LoanConfirmHandoverController;
+use App\Http\Controllers\Api\V1\LoanConfirmRepaymentController;
+use App\Http\Controllers\Api\V1\LoanIndexController;
+use App\Http\Controllers\Api\V1\LoanShowController;
+use App\Http\Controllers\Api\V1\LoanStoreController;
 use App\Http\Controllers\Api\V1\LoginController;
 use App\Http\Controllers\Api\V1\LogoutController;
 use App\Http\Controllers\Api\V1\MyTrustController;
@@ -61,6 +68,19 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::get('users', UserSearchController::class)->name('users.search');
         Route::get('users/{user}/trust', UserTrustController::class)->name('users.trust');
         Route::get('courses', CourseIndexController::class)->name('courses.index');
+
+        Route::prefix('loans')->name('loans.')->group(function (): void {
+            Route::get('/', LoanIndexController::class)->name('index');
+            Route::get('{loan}', LoanShowController::class)->name('show');
+            Route::post('{loan}/confirm-handover', LoanConfirmHandoverController::class)->name('confirm-handover');
+            Route::post('{loan}/confirm-repayment', LoanConfirmRepaymentController::class)->name('confirm-repayment');
+            Route::post('{loan}/cancel', LoanCancelController::class)->name('cancel');
+
+            Route::middleware('verified')->group(function (): void {
+                Route::post('/', LoanStoreController::class)->name('store');
+                Route::post('{loan}/accept', LoanAcceptController::class)->name('accept');
+            });
+        });
 
         Route::prefix('listings')->name('listings.')->group(function (): void {
             Route::get('/', ListingIndexController::class)->name('index');
