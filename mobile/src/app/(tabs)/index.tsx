@@ -1,11 +1,11 @@
 import { StyleSheet, Text } from 'react-native';
 
-import { Card } from '../components/Card';
-import { Screen } from '../components/Screen';
-import { useAuth } from '../context/AuthContext';
-import { spacing, typography } from '../theme';
+import { Card } from '@/components/Card';
+import { Screen } from '@/components/Screen';
+import { useAuth } from '@/context/AuthContext';
+import { spacing, typography } from '@/theme';
 
-export function HomeScreen() {
+export default function Home() {
   const { user } = useAuth();
 
   return (

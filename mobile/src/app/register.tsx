@@ -1,19 +1,18 @@
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { getErrorMessage, getFieldErrors } from '../../api/errors';
-import { Button } from '../../components/Button';
-import { Input } from '../../components/Input';
-import { Screen } from '../../components/Screen';
-import { useAuth } from '../../context/AuthContext';
-import { AuthStackParamList } from '../../navigation/types';
-import { colors, spacing, typography } from '../../theme';
+import { getErrorMessage, getFieldErrors } from '@/api/errors';
+import { Button } from '@/components/Button';
+import { Input } from '@/components/Input';
+import { Screen } from '@/components/Screen';
+import { useAuth } from '@/context/AuthContext';
+import { colors, spacing, typography } from '@/theme';
 
-type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
-export function LoginScreen({ navigation }: Props) {
-  const { signIn } = useAuth();
+export default function RegisterScreen() {
+  const { signUp } = useAuth();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -26,7 +25,7 @@ export function LoginScreen({ navigation }: Props) {
     setFieldErrors({});
 
     try {
-      await signIn(email.trim().toLowerCase(), password);
+      await signUp(name.trim(), email.trim().toLowerCase(), password);
     } catch (error) {
       const fields = getFieldErrors(error);
       setFieldErrors(fields);
@@ -39,10 +38,17 @@ export function LoginScreen({ navigation }: Props) {
   return (
     <Screen scroll>
       <View style={styles.header}>
-        <Text style={typography.title}>UniCircle</Text>
-        <Text style={typography.caption}>Your campus, in one place.</Text>
+        <Text style={typography.title}>Create account</Text>
+        <Text style={typography.caption}>Join your campus community.</Text>
       </View>
 
+      <Input
+        label="Full name"
+        value={name}
+        onChangeText={setName}
+        error={fieldErrors.name}
+        autoComplete="name"
+      />
       <Input
         label="University email"
         value={email}
@@ -54,20 +60,20 @@ export function LoginScreen({ navigation }: Props) {
         keyboardType="email-address"
       />
       <Input
-        label="Password"
+        label="Password (min. 8 characters)"
         value={password}
         onChangeText={setPassword}
         error={fieldErrors.password}
         autoCapitalize="none"
-        autoComplete="current-password"
+        autoComplete="new-password"
         secureTextEntry
       />
 
       {formError ? <Text style={styles.formError}>{formError}</Text> : null}
 
-      <Button title="Sign in" onPress={handleSubmit} loading={submitting} />
+      <Button title="Sign up" onPress={handleSubmit} loading={submitting} />
       <View style={styles.spacer} />
-      <Button title="Create an account" variant="secondary" onPress={() => navigation.navigate('Register')} />
+      <Button title="I already have an account" variant="secondary" onPress={() => router.back()} />
     </Screen>
   );
 }

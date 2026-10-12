@@ -1,10 +1,10 @@
-import axios from 'axios';
+import { isAxiosError } from 'axios';
 
 import { ApiErrorBody } from './types';
 
 /** A readable message for any error thrown by an API call. */
 export function getErrorMessage(error: unknown): string {
-  if (axios.isAxiosError<ApiErrorBody>(error)) {
+  if (isAxiosError<ApiErrorBody>(error)) {
     if (!error.response) {
       return 'Cannot reach the server. Check your connection and the API address.';
     }
@@ -21,7 +21,7 @@ export function getErrorMessage(error: unknown): string {
 
 /** First validation message per field from a Laravel 422 response. */
 export function getFieldErrors(error: unknown): Record<string, string> {
-  if (!axios.isAxiosError<ApiErrorBody>(error) || error.response?.status !== 422) {
+  if (!isAxiosError<ApiErrorBody>(error) || error.response?.status !== 422) {
     return {};
   }
 

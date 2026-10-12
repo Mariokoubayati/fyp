@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { create, isAxiosError } from 'axios';
 
 import { API_URL } from '../config';
 import { tokenStorage } from '../storage/tokenStorage';
@@ -10,7 +10,7 @@ export function setUnauthorizedHandler(handler: (() => void) | null): void {
   onUnauthorized = handler;
 }
 
-export const api = axios.create({
+export const api = create({
   baseURL: API_URL,
   timeout: 15000,
   headers: { Accept: 'application/json' },
@@ -29,9 +29,9 @@ api.interceptors.request.use(async (config) => {
 api.interceptors.response.use(
   (response) => response,
   async (error: unknown) => {
-    const isLoginRequest = axios.isAxiosError(error) && error.config?.url === '/auth/login';
+    const isLoginRequest = isAxiosError(error) && error.config?.url === '/auth/login';
 
-    if (axios.isAxiosError(error) && error.response?.status === 401 && !isLoginRequest) {
+    if (isAxiosError(error) && error.response?.status === 401 && !isLoginRequest) {
       await tokenStorage.clear();
       onUnauthorized?.();
     }
