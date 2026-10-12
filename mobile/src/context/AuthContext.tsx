@@ -12,6 +12,8 @@ interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (name: string, email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  /** Replace the cached user, e.g. after the profile was edited. */
+  updateUser: (user: User) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -82,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, isLoading, signIn, signUp, signOut }),
+    () => ({ user, isLoading, signIn, signUp, signOut, updateUser: setUser }),
     [user, isLoading, signIn, signUp, signOut],
   );
 
