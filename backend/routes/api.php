@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\EnrollmentStoreController;
 use App\Http\Controllers\Api\V1\ListingDestroyController;
 use App\Http\Controllers\Api\V1\ListingIndexController;
 use App\Http\Controllers\Api\V1\ListingMarkSoldController;
+use App\Http\Controllers\Api\V1\ListingRatingStoreController;
 use App\Http\Controllers\Api\V1\ListingShowController;
 use App\Http\Controllers\Api\V1\ListingStoreController;
 use App\Http\Controllers\Api\V1\ListingUpdateController;
@@ -24,6 +25,7 @@ use App\Http\Controllers\Api\V1\MyTrustController;
 use App\Http\Controllers\Api\V1\RefreshTokenController;
 use App\Http\Controllers\Api\V1\RegisterController;
 use App\Http\Controllers\Api\V1\ResendVerificationController;
+use App\Http\Controllers\Api\V1\StudentProfileController;
 use App\Http\Controllers\Api\V1\StudyGroupDestroyController;
 use App\Http\Controllers\Api\V1\StudyGroupIndexController;
 use App\Http\Controllers\Api\V1\StudyGroupJoinController;
@@ -36,6 +38,8 @@ use App\Http\Controllers\Api\V1\UpdateProfileController;
 use App\Http\Controllers\Api\V1\UserSearchController;
 use App\Http\Controllers\Api\V1\UserTrustController;
 use App\Http\Controllers\Api\V1\VerifyEmailController;
+use App\Http\Controllers\Api\V1\VouchDestroyController;
+use App\Http\Controllers\Api\V1\VouchStoreController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->name('api.v1.')->group(function (): void {
@@ -66,7 +70,10 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
 
         Route::get('me/trust', MyTrustController::class)->name('me.trust');
         Route::get('users', UserSearchController::class)->name('users.search');
+        Route::get('users/{user}', StudentProfileController::class)->name('users.show');
         Route::get('users/{user}/trust', UserTrustController::class)->name('users.trust');
+        Route::put('users/{user}/vouch', VouchStoreController::class)->middleware('verified')->name('users.vouch.store');
+        Route::delete('users/{user}/vouch', VouchDestroyController::class)->name('users.vouch.destroy');
         Route::get('courses', CourseIndexController::class)->name('courses.index');
 
         Route::prefix('loans')->name('loans.')->group(function (): void {
@@ -88,6 +95,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::patch('{listing}', ListingUpdateController::class)->name('update');
             Route::delete('{listing}', ListingDestroyController::class)->name('destroy');
             Route::post('{listing}/sold', ListingMarkSoldController::class)->name('sold');
+            Route::post('{listing}/rating', ListingRatingStoreController::class)->name('rating.store');
 
             Route::post('/', ListingStoreController::class)->middleware('verified')->name('store');
         });

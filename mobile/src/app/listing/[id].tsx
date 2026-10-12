@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { getErrorMessage } from '@/api/errors';
-import { deleteListing, fetchListing, markListingSold, setListingStatus } from '@/api/listings';
+import { deleteListing, fetchListing, markListingSold, rateSeller, setListingStatus } from '@/api/listings';
 import { Listing, Student } from '@/api/types';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
@@ -57,6 +57,11 @@ export default function ListingDetail() {
       setListing(await markListingSold(listing.id, student.id));
       setChoosingBuyer(false);
     });
+  const rate = (stars: number) =>
+    run(async () => {
+      await rateSeller(listing.id, stars);
+      setListing(await fetchListing(listing.id));
+    });
   const remove = () =>
     run(async () => {
       await deleteListing(listing.id);
@@ -76,10 +81,31 @@ export default function ListingDetail() {
           <Text style={styles.status}>{listing.status === 'sold' ? 'Sold' : 'Reserved'}</Text>
         ) : null}
         {listing.description ? <Text style={[typography.body, styles.description]}>{listing.description}</Text> : null}
-        {listing.seller ? <Text style={typography.caption}>Sold by {listing.seller.name}</Text> : null}
+        {listing.seller ? (
+          <Text style={styles.sellerLink} onPress={() => router.push(`/student/${listing.seller?.id}`)}>
+            Sold by {listing.seller.name}
+          </Text>
+        ) : null}
       </Card>
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
+
+      {listing.is_buyer && listing.status === 'sold' ? (
+        <Card style={styles.card}>
+          {listing.rating ? (
+            <Text style={typography.body}>You rated this seller {listing.rating.stars}/5. Thank you!</Text>
+          ) : (
+            <>
+              <Text style={typography.heading}>How was the seller?</Text>
+              <View style={styles.stars}>
+                {[1, 2, 3, 4, 5].map((stars) => (
+                  <Button key={stars} title={String(stars)} variant="secondary" onPress={() => rate(stars)} disabled={busy} />
+                ))}
+              </View>
+            </>
+          )}
+        </Card>
+      ) : null}
 
       {listing.is_seller && listing.status !== 'sold' ? (
         <View style={styles.actions}>
@@ -113,5 +139,7 @@ const styles = StyleSheet.create({
   status: { ...typography.caption, fontWeight: '700', color: colors.danger },
   description: { marginTop: spacing.xs },
   actions: { gap: spacing.sm },
+  stars: { flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' },
+  sellerLink: { ...typography.caption, color: colors.primary, fontWeight: '600' },
   error: { ...typography.caption, color: colors.danger, marginBottom: spacing.md },
 });

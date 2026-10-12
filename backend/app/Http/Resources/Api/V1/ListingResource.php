@@ -29,6 +29,8 @@ class ListingResource extends JsonResource
             'sold_at' => $this->sold_at,
             'created_at' => $this->created_at,
             'is_seller' => $this->seller_id === $request->user()?->id,
+            'is_buyer' => $this->buyer_id !== null && $this->buyer_id === $request->user()?->id,
+            'rating' => $this->whenLoaded('rating', fn () => $this->rating ? ['stars' => $this->rating->stars, 'comment' => $this->rating->comment] : null),
             'course' => CourseResource::make($this->whenLoaded('course')),
             'seller' => $this->whenLoaded('seller', fn () => ['id' => $this->seller->id, 'name' => $this->seller->name]),
         ];

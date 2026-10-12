@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Fillable(['course_id', 'title', 'description', 'price', 'category', 'condition', 'status'])]
 class Listing extends Model
@@ -31,6 +32,14 @@ class Listing extends Model
     public function buyer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'buyer_id');
+    }
+
+    /**
+     * @return HasOne<ListingRating, $this>
+     */
+    public function rating(): HasOne
+    {
+        return $this->hasOne(ListingRating::class);
     }
 
     /**

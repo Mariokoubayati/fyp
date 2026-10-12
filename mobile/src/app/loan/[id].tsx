@@ -65,11 +65,15 @@ export default function LoanDetail() {
         <Text style={typography.body}>Repay by {loan.due_date}</Text>
         {loan.purpose ? <Text style={typography.body}>{loan.purpose}</Text> : null}
         {loan.borrower ? (
-          <Text style={typography.caption}>
+          <Text style={styles.link} onPress={() => router.push(`/student/${loan.borrower?.id}`)}>
             Borrower: {loan.borrower.name} · Trust {loan.borrower.trust_score} ({TIER_LABELS[loan.borrower.trust_tier]})
           </Text>
         ) : null}
-        {loan.lender ? <Text style={typography.caption}>Lender: {loan.lender.name}</Text> : null}
+        {loan.lender ? (
+          <Text style={styles.link} onPress={() => router.push(`/student/${loan.lender?.id}`)}>
+            Lender: {loan.lender.name}
+          </Text>
+        ) : null}
       </Card>
 
       {step?.kind === 'confirm-handover' ? (
@@ -118,6 +122,7 @@ const styles = StyleSheet.create({
   status: { ...typography.heading, color: colors.primary },
   late: { color: colors.danger },
   note: { marginBottom: spacing.md },
+  link: { ...typography.caption, color: colors.primary, fontWeight: '600' },
   actions: { gap: spacing.sm },
   error: { ...typography.caption, color: colors.danger, marginBottom: spacing.md },
 });

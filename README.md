@@ -77,6 +77,9 @@ Base path: `/api/v1`. Authenticated routes need `Authorization: Bearer <token>`.
 | POST | `/loans/{id}/confirm-handover` | party | Confirm the cash changed hands (loan goes active when both did) |
 | POST | `/loans/{id}/confirm-repayment` | party | Confirm repayment (loan closes when both did; writes a trust event) |
 | POST | `/loans/{id}/cancel` | party | Withdraw a request or drop an accepted loan |
+| GET | `/users/{id}` | yes | A student's public profile with trust summary and vouch state |
+| PUT/DELETE | `/users/{id}/vouch` | verified / yes | Vouch for a classmate or take it back (max 10 given) |
+| POST | `/listings/{id}/rating` | buyer | Rate the seller 1-5 after a sale (feeds their trust score) |
 | GET | `/listings` | yes | Available listings (`?search=`, `?category=`, `?course_id=`, `?max_price=`) or `?mine=1` |
 | POST | `/listings` | verified | Put an item up for sale |
 | GET | `/listings/{id}` | yes | One listing |

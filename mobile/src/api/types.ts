@@ -86,6 +86,8 @@ export interface Listing {
   sold_at: string | null;
   created_at: string;
   is_seller: boolean;
+  is_buyer: boolean;
+  rating?: { stars: number; comment: string | null } | null;
   course?: Course | null;
   seller?: { id: number; name: string };
 }
@@ -139,4 +141,11 @@ export interface TrustSummary {
   max_loan: number;
   breakdown: Record<'repayment' | 'marketplace' | 'vouches' | 'account' | 'engagement', number>;
   history: { score: number; tier: TrustTier; trigger: string | null; created_at: string }[];
+}
+
+export interface StudentProfile extends Student {
+  bio: string | null;
+  trust: { score: number; tier: TrustTier; max_loan: number };
+  vouch_count: number;
+  vouched_by_me: boolean;
 }

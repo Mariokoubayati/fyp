@@ -46,3 +46,7 @@ export async function markListingSold(id: number, buyerId: number): Promise<List
 export async function deleteListing(id: number): Promise<void> {
   await api.delete(`/listings/${id}`);
 }
+
+export async function rateSeller(id: number, stars: number): Promise<void> {
+  await api.post(`/listings/${id}/rating`, { stars });
+}
