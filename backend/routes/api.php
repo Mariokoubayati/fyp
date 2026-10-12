@@ -10,6 +10,14 @@ use App\Http\Controllers\Api\V1\LogoutController;
 use App\Http\Controllers\Api\V1\RefreshTokenController;
 use App\Http\Controllers\Api\V1\RegisterController;
 use App\Http\Controllers\Api\V1\ResendVerificationController;
+use App\Http\Controllers\Api\V1\StudyGroupDestroyController;
+use App\Http\Controllers\Api\V1\StudyGroupIndexController;
+use App\Http\Controllers\Api\V1\StudyGroupJoinController;
+use App\Http\Controllers\Api\V1\StudyGroupLeaveController;
+use App\Http\Controllers\Api\V1\StudyGroupRecommendedController;
+use App\Http\Controllers\Api\V1\StudyGroupShowController;
+use App\Http\Controllers\Api\V1\StudyGroupStoreController;
+use App\Http\Controllers\Api\V1\StudyGroupUpdateController;
 use App\Http\Controllers\Api\V1\UpdateProfileController;
 use App\Http\Controllers\Api\V1\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
@@ -41,5 +49,19 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::delete('me/courses/{course}', EnrollmentDestroyController::class)->name('me.courses.destroy');
 
         Route::get('courses', CourseIndexController::class)->name('courses.index');
+
+        Route::prefix('study-groups')->name('study-groups.')->group(function (): void {
+            Route::get('/', StudyGroupIndexController::class)->name('index');
+            Route::get('recommended', StudyGroupRecommendedController::class)->name('recommended');
+            Route::get('{study_group}', StudyGroupShowController::class)->name('show');
+            Route::delete('{study_group}/membership', StudyGroupLeaveController::class)->name('leave');
+            Route::patch('{study_group}', StudyGroupUpdateController::class)->name('update');
+            Route::delete('{study_group}', StudyGroupDestroyController::class)->name('destroy');
+
+            Route::middleware('verified')->group(function (): void {
+                Route::post('/', StudyGroupStoreController::class)->name('store');
+                Route::put('{study_group}/membership', StudyGroupJoinController::class)->name('join');
+            });
+        });
     });
 });
