@@ -6,6 +6,7 @@ export interface User {
   major: string | null;
   study_year: number | null;
   bio: string | null;
+  trust_score: number;
   created_at: string;
 }
 
@@ -104,4 +105,38 @@ export interface Student {
   name: string;
   major: string | null;
   study_year: number | null;
+}
+
+export type LoanStatus = 'requested' | 'accepted' | 'active' | 'repaid' | 'overdue' | 'defaulted' | 'cancelled';
+
+export interface Loan {
+  id: number;
+  amount: number;
+  purpose: string | null;
+  due_date: string;
+  status: LoanStatus;
+  my_role: 'borrower' | 'lender' | null;
+  borrower?: { id: number; name: string; trust_score: number; trust_tier: TrustTier };
+  lender?: { id: number; name: string } | null;
+  handover: { lender_confirmed: boolean; borrower_confirmed: boolean };
+  repayment: { lender_confirmed: boolean; borrower_confirmed: boolean };
+  activated_at: string | null;
+  repaid_at: string | null;
+  created_at: string;
+}
+
+export interface NewLoan {
+  amount: number;
+  purpose: string | null;
+  due_date: string;
+}
+
+export type TrustTier = 'restricted' | 'basic' | 'trusted';
+
+export interface TrustSummary {
+  score: number;
+  tier: TrustTier;
+  max_loan: number;
+  breakdown: Record<'repayment' | 'marketplace' | 'vouches' | 'account' | 'engagement', number>;
+  history: { score: number; tier: TrustTier; trigger: string | null; created_at: string }[];
 }
