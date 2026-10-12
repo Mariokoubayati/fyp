@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('trust:recalculate')->dailyAt('03:00');
+Schedule::command('loans:process-due')->dailyAt('02:00');
