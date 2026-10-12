@@ -50,7 +50,7 @@ export default function RegisterScreen() {
         autoComplete="name"
       />
       <Input
-        label="University email"
+        label="University email (@ua.edu.lb)"
         value={email}
         onChangeText={setEmail}
         error={fieldErrors.email}

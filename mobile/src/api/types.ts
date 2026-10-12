@@ -3,7 +3,29 @@ export interface User {
   name: string;
   email: string;
   email_verified_at: string | null;
+  major: string | null;
+  study_year: number | null;
+  bio: string | null;
   created_at: string;
+}
+
+export interface Course {
+  id: number;
+  code: string;
+  name: string;
+}
+
+export interface ProfileUpdate {
+  name?: string;
+  major?: string | null;
+  study_year?: number | null;
+  bio?: string | null;
+}
+
+/** Laravel paginator wrapped by an Eloquent resource collection. */
+export interface Paginated<T> {
+  data: T[];
+  meta: { current_page: number; last_page: number; total: number };
 }
 
 export interface AuthSession {
