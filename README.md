@@ -59,8 +59,16 @@ Base path: `/api/v1`. Authenticated routes need `Authorization: Bearer <token>`.
 | GET | `/me/courses` | yes | Courses the student is enrolled in |
 | PUT | `/me/courses/{course}` | yes | Enroll in a course (idempotent) |
 | DELETE | `/me/courses/{course}` | yes | Leave a course (idempotent) |
+| GET | `/study-groups` | yes | Upcoming groups (`?course_id=`, `?mine=1`, paginated) |
+| GET | `/study-groups/recommended` | yes | Open groups for your courses, ranked by classmates |
+| POST | `/study-groups` | verified | Start a group (you must be enrolled in the course) |
+| GET | `/study-groups/{id}` | yes | One group |
+| PATCH | `/study-groups/{id}` | creator | Edit a group |
+| DELETE | `/study-groups/{id}` | creator | Cancel a group |
+| PUT | `/study-groups/{id}/membership` | verified | Join (409 when full or already started) |
+| DELETE | `/study-groups/{id}/membership` | yes | Leave (the creator cannot leave) |
 
-Success responses are wrapped in `data`. Errors return `message` (and `errors` for validation failures).
+Routes marked *verified* need a confirmed university email (403 otherwise). Success responses are wrapped in `data`. Errors return `message` (and `errors` for validation failures).
 
 ## Branch and review rules
 
