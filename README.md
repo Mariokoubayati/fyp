@@ -47,11 +47,18 @@ Base path: `/api/v1`. Authenticated routes need `Authorization: Bearer <token>`.
 
 | Method | Path | Auth | Description |
 | --- | --- | --- | --- |
-| POST | `/auth/register` | no | Create an account, returns a token |
+| POST | `/auth/register` | no | Create an account (university email only, `@ua.edu.lb`), returns a token and sends a verification email |
 | POST | `/auth/login` | no | Exchange credentials for a token (5 attempts per minute) |
 | POST | `/auth/logout` | yes | Invalidate the current token |
 | POST | `/auth/refresh` | yes | Swap the token for a fresh one |
+| GET | `/auth/email/verify/{id}/{hash}` | signed link | Confirm the email address from the verification mail |
+| POST | `/auth/email/resend` | yes | Send the verification email again |
 | GET | `/me` | yes | The authenticated user |
+| PATCH | `/me` | yes | Update name, major, study year and bio |
+| GET | `/courses` | yes | Course catalogue (`?search=`, paginated) |
+| GET | `/me/courses` | yes | Courses the student is enrolled in |
+| PUT | `/me/courses/{course}` | yes | Enroll in a course (idempotent) |
+| DELETE | `/me/courses/{course}` | yes | Leave a course (idempotent) |
 
 Success responses are wrapped in `data`. Errors return `message` (and `errors` for validation failures).
 

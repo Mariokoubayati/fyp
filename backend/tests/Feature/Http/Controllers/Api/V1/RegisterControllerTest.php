@@ -3,8 +3,10 @@
 namespace Tests\Feature\Http\Controllers\Api\V1;
 
 use App\Models\User;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 class RegisterControllerTest extends TestCase
@@ -18,7 +20,7 @@ class RegisterControllerTest extends TestCase
     {
         return [
             'name' => 'Sara Haddad',
-            'email' => 'sara@example.com',
+            'email' => 'sara@ua.edu.lb',
             'password' => 'Sup3r-secret-pass',
         ];
     }
@@ -29,11 +31,11 @@ class RegisterControllerTest extends TestCase
 
         $response->assertCreated()
             ->assertJsonPath('data.token_type', 'bearer')
-            ->assertJsonPath('data.user.email', 'sara@example.com')
+            ->assertJsonPath('data.user.email', 'sara@ua.edu.lb')
             ->assertJsonStructure(['data' => ['access_token', 'token_type', 'expires_in', 'user' => ['id', 'name', 'email']]])
             ->assertJsonMissingPath('data.user.password');
 
-        $user = User::where('email', 'sara@example.com')->firstOrFail();
+        $user = User::where('email', 'sara@ua.edu.lb')->firstOrFail();
         $this->assertSame('Sara Haddad', $user->name);
         $this->assertTrue(Hash::check('Sup3r-secret-pass', $user->password));
     }
@@ -48,7 +50,7 @@ class RegisterControllerTest extends TestCase
         $this->withToken($token)
             ->getJson(route('api.v1.me'))
             ->assertOk()
-            ->assertJsonPath('data.email', 'sara@example.com');
+            ->assertJsonPath('data.email', 'sara@ua.edu.lb');
     }
 
     public function test_returns_422_when_payload_is_empty(): void
@@ -62,7 +64,7 @@ class RegisterControllerTest extends TestCase
 
     public function test_returns_422_when_email_is_already_taken(): void
     {
-        User::factory()->create(['email' => 'sara@example.com']);
+        User::factory()->create(['email' => 'sara@ua.edu.lb']);
 
         $this->postJson(route('api.v1.auth.register'), $this->validPayload())
             ->assertUnprocessable()
@@ -84,5 +86,32 @@ class RegisterControllerTest extends TestCase
             ->assertJsonValidationErrors(['password']);
 
         $this->assertDatabaseCount('users', 0);
+    }
+
+    public function test_returns_422_when_email_is_not_a_university_address(): void
+    {
+        $this->postJson(route('api.v1.auth.register'), [...$this->validPayload(), 'email' => 'sara@gmail.com'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['email']);
+
+        $this->assertDatabaseMissing('users', ['email' => 'sara@gmail.com']);
+    }
+
+    public function test_returns_422_when_email_only_looks_like_a_university_address(): void
+    {
+        $this->postJson(route('api.v1.auth.register'), [...$this->validPayload(), 'email' => 'sara@evilua.edu.lb.example.com'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['email']);
+    }
+
+    public function test_sends_a_verification_email_and_leaves_the_account_unverified(): void
+    {
+        Notification::fake();
+
+        $this->postJson(route('api.v1.auth.register'), $this->validPayload())
+            ->assertCreated()
+            ->assertJsonPath('data.user.email_verified_at', null);
+
+        Notification::assertSentTo(User::where('email', 'sara@ua.edu.lb')->firstOrFail(), VerifyEmail::class);
     }
 }

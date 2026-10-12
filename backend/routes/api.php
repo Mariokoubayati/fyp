@@ -1,10 +1,17 @@
 <?php
 
+use App\Http\Controllers\Api\V1\CourseIndexController;
 use App\Http\Controllers\Api\V1\CurrentUserController;
+use App\Http\Controllers\Api\V1\EnrollmentDestroyController;
+use App\Http\Controllers\Api\V1\EnrollmentIndexController;
+use App\Http\Controllers\Api\V1\EnrollmentStoreController;
 use App\Http\Controllers\Api\V1\LoginController;
 use App\Http\Controllers\Api\V1\LogoutController;
 use App\Http\Controllers\Api\V1\RefreshTokenController;
 use App\Http\Controllers\Api\V1\RegisterController;
+use App\Http\Controllers\Api\V1\ResendVerificationController;
+use App\Http\Controllers\Api\V1\UpdateProfileController;
+use App\Http\Controllers\Api\V1\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->name('api.v1.')->group(function (): void {
@@ -12,13 +19,27 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::post('register', RegisterController::class)->name('register');
         Route::post('login', LoginController::class)->middleware('throttle:login')->name('login');
 
+        Route::get('email/verify/{id}/{hash}', VerifyEmailController::class)
+            ->middleware(['signed', 'throttle:6,1'])
+            ->name('verification.verify');
+
         Route::middleware('auth:api')->group(function (): void {
             Route::post('logout', LogoutController::class)->name('logout');
             Route::post('refresh', RefreshTokenController::class)->name('refresh');
+            Route::post('email/resend', ResendVerificationController::class)
+                ->middleware('throttle:6,1')
+                ->name('verification.resend');
         });
     });
 
     Route::middleware('auth:api')->group(function (): void {
         Route::get('me', CurrentUserController::class)->name('me');
+        Route::patch('me', UpdateProfileController::class)->name('me.update');
+
+        Route::get('me/courses', EnrollmentIndexController::class)->name('me.courses.index');
+        Route::put('me/courses/{course}', EnrollmentStoreController::class)->name('me.courses.store');
+        Route::delete('me/courses/{course}', EnrollmentDestroyController::class)->name('me.courses.destroy');
+
+        Route::get('courses', CourseIndexController::class)->name('courses.index');
     });
 });
