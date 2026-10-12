@@ -13,6 +13,6 @@ class ListingShowController extends Controller
      */
     public function __invoke(Listing $listing): ListingResource
     {
-        return new ListingResource($listing->load(['seller', 'course']));
+        return new ListingResource($listing->load(['seller', 'course', 'rating']));
     }
 }

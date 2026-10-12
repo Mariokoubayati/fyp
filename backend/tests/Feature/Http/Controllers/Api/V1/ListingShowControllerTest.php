@@ -39,4 +39,16 @@ class ListingShowControllerTest extends TestCase
             ->getJson(route('api.v1.listings.show', 9999))
             ->assertNotFound();
     }
+
+    public function test_shows_whether_the_viewer_is_the_buyer_and_the_rating_given(): void
+    {
+        $buyer = User::factory()->create();
+        $listing = Listing::factory()->soldTo($buyer)->create();
+
+        $this->withToken(JWTAuth::fromUser($buyer))
+            ->getJson(route('api.v1.listings.show', $listing))
+            ->assertOk()
+            ->assertJsonPath('data.is_buyer', true)
+            ->assertJsonPath('data.rating', null);
+    }
 }
