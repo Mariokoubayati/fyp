@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\V1\StudyGroupShowController;
 use App\Http\Controllers\Api\V1\StudyGroupStoreController;
 use App\Http\Controllers\Api\V1\StudyGroupUpdateController;
 use App\Http\Controllers\Api\V1\UpdateProfileController;
+use App\Http\Controllers\Api\V1\UserSearchController;
 use App\Http\Controllers\Api\V1\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
@@ -54,6 +55,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::put('me/courses/{course}', EnrollmentStoreController::class)->name('me.courses.store');
         Route::delete('me/courses/{course}', EnrollmentDestroyController::class)->name('me.courses.destroy');
 
+        Route::get('users', UserSearchController::class)->name('users.search');
         Route::get('courses', CourseIndexController::class)->name('courses.index');
 
         Route::prefix('listings')->name('listings.')->group(function (): void {
