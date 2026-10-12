@@ -26,6 +26,7 @@ class UserResource extends JsonResource
             'major' => $this->major,
             'study_year' => $this->study_year,
             'bio' => $this->bio,
+            'trust_score' => $this->trust_score,
             'created_at' => $this->created_at,
         ];
     }

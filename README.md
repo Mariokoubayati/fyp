@@ -67,6 +67,9 @@ Base path: `/api/v1`. Authenticated routes need `Authorization: Bearer <token>`.
 | DELETE | `/study-groups/{id}` | creator | Cancel a group |
 | PUT | `/study-groups/{id}/membership` | verified | Join (409 when full or already started) |
 | DELETE | `/study-groups/{id}/membership` | yes | Leave (the creator cannot leave) |
+| GET | `/me/trust` | yes | Your score, tier, component breakdown and history |
+| GET | `/users/{id}/trust` | yes | Another student's `score`, `tier`, `max_loan` |
+| GET | `/users?search=` | yes | Find students by name (id, name, major only) |
 | GET | `/listings` | yes | Available listings (`?search=`, `?category=`, `?course_id=`, `?max_price=`) or `?mine=1` |
 | POST | `/listings` | verified | Put an item up for sale |
 | GET | `/listings/{id}` | yes | One listing |

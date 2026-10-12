@@ -3,17 +3,20 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\ListingStatus;
+use App\Enums\TrustEventType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\MarkListingSoldRequest;
 use App\Http\Resources\Api\V1\ListingResource;
 use App\Models\Listing;
+use App\Models\User;
+use App\Services\Trust\TrustService;
 
 class ListingMarkSoldController extends Controller
 {
     /**
      * Close the sale and record who bought the item.
      */
-    public function __invoke(MarkListingSoldRequest $request, Listing $listing): ListingResource
+    public function __invoke(MarkListingSoldRequest $request, Listing $listing, TrustService $trust): ListingResource
     {
         abort_if($listing->status === ListingStatus::Sold, 409, 'This listing is already sold.');
 
@@ -22,6 +25,9 @@ class ListingMarkSoldController extends Controller
             'buyer_id' => $request->integer('buyer_id'),
             'sold_at' => now(),
         ])->save();
+
+        $trust->record($listing->seller, TrustEventType::SaleCompleted, $listing);
+        $trust->record(User::findOrFail($listing->buyer_id), TrustEventType::PurchaseCompleted, $listing);
 
         return new ListingResource($listing->load(['seller', 'course']));
     }
