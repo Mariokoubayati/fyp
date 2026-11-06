@@ -1,0 +1,177 @@
+{
+  "validation_auc": {
+    "logistic_regression": 0.711,
+    "gradient_boosting": 0.7729
+  },
+  "chosen_model": "gradient_boosting",
+  "tests": {
+    "in_distribution": {
+      "rule_baseline": {
+        "requests": 11509,
+        "default_rate": 0.0891,
+        "auc": 0.646,
+        "brier": 0.0786,
+        "ece": 0.0076,
+        "money_lost_at_80pct_approval": 14573.0,
+        "share_of_default_money_avoided": 0.3903,
+        "bad_actor_cashouts_in_riskiest_20pct": 0.0183,
+        "strategic_cashouts_caught": 0.0354,
+        "ring_cashouts_caught": 0.0
+      },
+      "rule_baseline_plus_amount": {
+        "requests": 11509,
+        "default_rate": 0.0891,
+        "auc": 0.6634,
+        "brier": 0.0785,
+        "ece": 0.0035,
+        "money_lost_at_80pct_approval": 10042.0,
+        "share_of_default_money_avoided": 0.5799,
+        "bad_actor_cashouts_in_riskiest_20pct": 0.1101,
+        "strategic_cashouts_caught": 0.2124,
+        "ring_cashouts_caught": 0.0
+      },
+      "logistic_regression": {
+        "requests": 11509,
+        "default_rate": 0.0891,
+        "auc": 0.7113,
+        "brier": 0.0772,
+        "ece": 0.0079,
+        "money_lost_at_80pct_approval": 9818.0,
+        "share_of_default_money_avoided": 0.5893,
+        "bad_actor_cashouts_in_riskiest_20pct": 0.289,
+        "strategic_cashouts_caught": 0.1062,
+        "ring_cashouts_caught": 0.4857
+      },
+      "gradient_boosting": {
+        "requests": 11509,
+        "default_rate": 0.0891,
+        "auc": 0.775,
+        "brier": 0.0706,
+        "ece": 0.006,
+        "money_lost_at_80pct_approval": 8699.0,
+        "share_of_default_money_avoided": 0.6361,
+        "bad_actor_cashouts_in_riskiest_20pct": 0.8073,
+        "strategic_cashouts_caught": 0.6372,
+        "ring_cashouts_caught": 0.9905
+      }
+    },
+    "shifted": {
+      "rule_baseline": {
+        "requests": 11948,
+        "default_rate": 0.1174,
+        "auc": 0.5987,
+        "brier": 0.1014,
+        "ece": 0.0223,
+        "money_lost_at_80pct_approval": 28691.0,
+        "share_of_default_money_avoided": 0.3953,
+        "bad_actor_cashouts_in_riskiest_20pct": 0.0137,
+        "strategic_cashouts_caught": 0.0263,
+        "ring_cashouts_caught": 0.0
+      },
+      "rule_baseline_plus_amount": {
+        "requests": 11948,
+        "default_rate": 0.1174,
+        "auc": 0.6857,
+        "brier": 0.0985,
+        "ece": 0.0175,
+        "money_lost_at_80pct_approval": 18425.0,
+        "share_of_default_money_avoided": 0.6117,
+        "bad_actor_cashouts_in_riskiest_20pct": 0.137,
+        "strategic_cashouts_caught": 0.2632,
+        "ring_cashouts_caught": 0.0
+      },
+      "logistic_regression": {
+        "requests": 11948,
+        "default_rate": 0.1174,
+        "auc": 0.7296,
+        "brier": 0.0958,
+        "ece": 0.0191,
+        "money_lost_at_80pct_approval": 19608.0,
+        "share_of_default_money_avoided": 0.5868,
+        "bad_actor_cashouts_in_riskiest_20pct": 0.2785,
+        "strategic_cashouts_caught": 0.136,
+        "ring_cashouts_caught": 0.4333
+      },
+      "gradient_boosting": {
+        "requests": 11948,
+        "default_rate": 0.1174,
+        "auc": 0.7871,
+        "brier": 0.0889,
+        "ece": 0.0139,
+        "money_lost_at_80pct_approval": 16444.0,
+        "share_of_default_money_avoided": 0.6534,
+        "bad_actor_cashouts_in_riskiest_20pct": 0.7078,
+        "strategic_cashouts_caught": 0.4518,
+        "ring_cashouts_caught": 0.9857
+      }
+    },
+    "unseen_type": {
+      "rule_baseline": {
+        "requests": 11509,
+        "default_rate": 0.0891,
+        "auc": 0.646,
+        "brier": 0.0786,
+        "ece": 0.0099,
+        "money_lost_at_80pct_approval": 14573.0,
+        "share_of_default_money_avoided": 0.3903,
+        "bad_actor_cashouts_in_riskiest_20pct": 0.0183,
+        "strategic_cashouts_caught": 0.0354,
+        "ring_cashouts_caught": 0.0
+      },
+      "rule_baseline_plus_amount": {
+        "requests": 11509,
+        "default_rate": 0.0891,
+        "auc": 0.6652,
+        "brier": 0.0784,
+        "ece": 0.0118,
+        "money_lost_at_80pct_approval": 10562.0,
+        "share_of_default_money_avoided": 0.5581,
+        "bad_actor_cashouts_in_riskiest_20pct": 0.0826,
+        "strategic_cashouts_caught": 0.1593,
+        "ring_cashouts_caught": 0.0
+      },
+      "gradient_boosting": {
+        "requests": 11509,
+        "default_rate": 0.0891,
+        "auc": 0.7552,
+        "brier": 0.0718,
+        "ece": 0.0098,
+        "money_lost_at_80pct_approval": 10126.0,
+        "share_of_default_money_avoided": 0.5764,
+        "bad_actor_cashouts_in_riskiest_20pct": 0.5321,
+        "strategic_cashouts_caught": 0.0973,
+        "ring_cashouts_caught": 1.0
+      }
+    }
+  },
+  "policy": {
+    "in_distribution": {
+      "rules": {
+        "good_requests_allowed": 0.781,
+        "bad_requests_allowed": 0.5692,
+        "default_money_allowed": 9942.0,
+        "good_money_allowed": 123344.0
+      },
+      "rules_plus_ai": {
+        "good_requests_allowed": 0.779,
+        "bad_requests_allowed": 0.5146,
+        "default_money_allowed": 8354.0,
+        "good_money_allowed": 122681.0
+      }
+    },
+    "shifted": {
+      "rules": {
+        "good_requests_allowed": 0.723,
+        "bad_requests_allowed": 0.3977,
+        "default_money_allowed": 14176.0,
+        "good_money_allowed": 118326.0
+      },
+      "rules_plus_ai": {
+        "good_requests_allowed": 0.7133,
+        "bad_requests_allowed": 0.3642,
+        "default_money_allowed": 10315.0,
+        "good_money_allowed": 110267.0
+      }
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "version": "trust-hgb-1",
+  "algorithm": "gradient_boosting",
+  "features": [
+    "loans_repaid",
+    "on_time_rate",
+    "late_count",
+    "overdue_count",
+    "defaulted_count",
+    "distinct_lenders",
+    "top_lender_share",
+    "reciprocal_share",
+    "short_loan_share",
+    "max_repaid_amount",
+    "distinct_borrowers",
+    "circular_lending",
+    "vouches_received",
+    "mutual_vouch_share",
+    "sales_count",
+    "avg_rating",
+    "account_age_days",
+    "amount",
+    "amount_to_max_repaid"
+  ],
+  "risk_threshold": 0.3,
+  "trained_at": "2026-11-06T09:35:36+00:00",
+  "training_requests": 11827,
+  "training_default_rate": 0.0868
+}
