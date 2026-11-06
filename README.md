@@ -41,6 +41,16 @@ cd backend
 php artisan test
 ```
 
+Run the same tests on MySQL (what CI does, catches strict-mode, enum and foreign-key differences):
+
+```sh
+cd backend
+DB_CONNECTION=mysql DB_DATABASE=unicircle_test DB_USERNAME=root DB_PASSWORD= \
+  php -d variables_order=EGPCS vendor/bin/phpunit
+```
+
+CI (`.github/workflows/ci.yml`) runs the backend suite on MySQL 8 and SQLite, plus the mobile typecheck and lint, on every pull request.
+
 ## API (v1)
 
 Base path: `/api/v1`. Authenticated routes need `Authorization: Bearer <token>`.
