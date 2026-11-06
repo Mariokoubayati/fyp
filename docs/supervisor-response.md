@@ -46,8 +46,8 @@ Two friends lending back and forth, and a ring of three, are both flagged and st
 | Reliable | ~55% | Repays on time with high probability |
 | Flaky | ~20% | Often late, sometimes defaults |
 | Newcomer | ~10% | Little history |
-| Strategic defaulter | ~8% | Repays small loans to build a score, then defaults on a large one |
-| Collusion ring | ~7% | Groups of 2 to 4 that trade fake loans, then one member borrows from an outsider and defaults |
+| Strategic defaulter | ~8% | Repays slowly growing loans from many lenders to build a score, then defaults on one last, slightly larger loan |
+| Collusion ring | ~7% | Groups of 3 that trade fast fake loans, 5-star sales and mutual vouches, then borrow at the $15 to $25 Basic limit from outsiders and default |
 
 Whether a loan defaults depends only on the hidden reliability, the loan size, the type and an exam-season shock that no feature can see. The trust rules never see the hidden values, and the generator never uses the rules. Bad actors are injected at known rates so we can measure how many each method catches. They also behave realistically: rings cash out at the $15 to $25 Basic limit, and strategic defaulters grow their loans slowly so the last one does not stand out.
 
@@ -91,7 +91,7 @@ Today the backend has 243 automated tests, all passing on MySQL 8 and SQLite, an
 
 ### 4. Scope
 
-Agreed. The AI service and evaluation now come right after the anti-collusion work (Weeks 10 and 11). Events, analytics and badges are now stretch goals and come after the core features. Messaging and notifications stay in core because they are part of the proposal's objectives.
+Agreed. The AI trust service and its evaluation are already done (Week 9, point 2). The recommender and its precision@k evaluation come next (Weeks 10 and 11). Events, analytics and badges are now stretch goals and come after the core features. Messaging and notifications stay in core because they are part of the proposal's objectives.
 
 ### 5. Timeline
 
