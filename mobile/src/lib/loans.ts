@@ -22,6 +22,8 @@ export const FLAG_MESSAGES: Record<TrustFlag, string> = {
   new_account: 'New accounts stay at Basic for their first 14 days.',
   circular_lending:
     'Loans went back and forth within a small circle, so your tier stays at Basic for now.',
+  model_risk:
+    'Our risk check expects a higher chance of late repayment for larger loans, so your limit is lower for now. Repaying on time raises it.',
 };
 
 /** Which action the signed-in student can take next, if any. */

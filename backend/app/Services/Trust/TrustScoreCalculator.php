@@ -19,6 +19,9 @@ class TrustScoreCalculator
 
     public const FLAG_CIRCULAR_LENDING = 'circular_lending';
 
+    /** Set by TrustService when the AI model lowers the tier. */
+    public const FLAG_MODEL_RISK = 'model_risk';
+
     /**
      * @param  Collection<int, TrustEvent>  $events  Every trust event of the student.
      */

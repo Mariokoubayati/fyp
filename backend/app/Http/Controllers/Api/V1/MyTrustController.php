@@ -15,7 +15,8 @@ class MyTrustController extends Controller
     public function __invoke(Request $request, TrustService $trust): JsonResponse
     {
         $user = $request->user();
-        $result = $trust->refresh($user);
+        $trust->refresh($user);
+        $result = $trust->current($user);
 
         return response()->json(['data' => [
             'score' => $result->score,
@@ -23,6 +24,7 @@ class MyTrustController extends Controller
             'max_loan' => $result->maxLoan,
             'breakdown' => $result->breakdown,
             'flags' => $result->flags,
+            'model' => $result->model,
             'history' => $user->trustScoreLogs()
                 ->latest('id')
                 ->limit(20)
