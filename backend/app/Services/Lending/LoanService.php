@@ -137,10 +137,16 @@ class LoanService
                 $locked->repaid_at = now();
                 $locked->save();
 
+                // A loan closed within hours of the handover proves nothing: log it, do not reward it.
+                $tooShort = $locked->activated_at !== null
+                    && $locked->activated_at->diffInHours($locked->repaid_at) < config('trust.anti_collusion.min_loan_hours');
+
                 $this->trust->record(
                     $locked->borrower,
                     $wasOnTime ? TrustEventType::LoanRepaidOnTime : TrustEventType::LoanRepaidLate,
                     $locked,
+                    counterparty: $locked->lender,
+                    discountReason: $tooShort ? 'loan_too_short' : null,
                 );
 
                 return $locked;
@@ -175,7 +181,7 @@ class LoanService
         $this->stateMachine->transition($loan, LoanStatus::Overdue);
         $loan->save();
 
-        $this->trust->record($loan->borrower, TrustEventType::LoanOverdue, $loan);
+        $this->trust->record($loan->borrower, TrustEventType::LoanOverdue, $loan, counterparty: $loan->lender);
     }
 
     /**
@@ -186,6 +192,6 @@ class LoanService
         $this->stateMachine->transition($loan, LoanStatus::Defaulted);
         $loan->save();
 
-        $this->trust->record($loan->borrower, TrustEventType::LoanDefaulted, $loan);
+        $this->trust->record($loan->borrower, TrustEventType::LoanDefaulted, $loan, counterparty: $loan->lender);
     }
 }

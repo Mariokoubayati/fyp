@@ -19,7 +19,7 @@ class ProcessDueLoansTest extends TestCase
 
         $this->assertSame(LoanStatus::Overdue, $loan->refresh()->status);
         $this->assertDatabaseHas('trust_events', ['user_id' => $loan->borrower_id, 'type' => 'loan_overdue']);
-        $this->assertSame(465, $loan->borrower->refresh()->trust_score);
+        $this->assertSame(440, $loan->borrower->refresh()->trust_score);
     }
 
     public function test_a_loan_due_today_is_not_overdue_yet(): void

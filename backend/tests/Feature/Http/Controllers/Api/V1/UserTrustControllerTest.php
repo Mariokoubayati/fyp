@@ -23,7 +23,7 @@ class UserTrustControllerTest extends TestCase
         $this->withToken(JWTAuth::fromUser(User::factory()->create()))
             ->getJson(route('api.v1.users.trust', $other))
             ->assertOk()
-            ->assertExactJson(['data' => ['score' => 525, 'tier' => 'basic', 'max_loan' => 20]]);
+            ->assertExactJson(['data' => ['score' => 500, 'tier' => 'basic', 'max_loan' => 20]]);
     }
 
     public function test_returns_404_when_the_student_does_not_exist(): void

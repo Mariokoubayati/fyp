@@ -10,12 +10,15 @@ class RecalculateTrustScoresTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_recomputes_scores_so_account_age_is_reflected(): void
+    public function test_recomputes_every_score_and_logs_it(): void
     {
-        $veteran = User::factory()->create(['created_at' => now()->subDays(95)]);
+        $students = User::factory()->count(3)->create(['created_at' => now()->subDays(95)]);
 
         $this->artisan('trust:recalculate')->assertSuccessful();
 
-        $this->assertSame(500 + 25 + 15, $veteran->refresh()->trust_score);
+        foreach ($students as $student) {
+            $this->assertSame(500, $student->refresh()->trust_score);
+            $this->assertSame(1, $student->trustScoreLogs()->count());
+        }
     }
 }

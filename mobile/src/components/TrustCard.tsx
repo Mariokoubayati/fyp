@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { TrustSummary } from '../api/types';
-import { TIER_LABELS } from '../lib/loans';
+import { FLAG_MESSAGES, TIER_LABELS } from '../lib/loans';
 import { colors, spacing, typography } from '../theme';
 import { Card } from './Card';
 
@@ -9,8 +9,6 @@ const COMPONENT_LABELS: Record<keyof TrustSummary['breakdown'], string> = {
   repayment: 'Loan repayment',
   marketplace: 'Marketplace',
   vouches: 'Vouches',
-  account: 'Account',
-  engagement: 'Engagement',
 };
 
 export function TrustCard({ trust }: { trust: TrustSummary }) {
@@ -38,6 +36,12 @@ export function TrustCard({ trust }: { trust: TrustSummary }) {
           </View>
         );
       })}
+
+      {trust.flags.map((flag) => (
+        <Text key={flag} style={styles.flag}>
+          {FLAG_MESSAGES[flag]}
+        </Text>
+      ))}
     </Card>
   );
 }
@@ -49,4 +53,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', justifyContent: 'space-between' },
   points: { ...typography.caption, fontWeight: '700', color: colors.success },
   negative: { color: colors.danger },
+  flag: { ...typography.caption, color: colors.danger, marginTop: spacing.xs },
 });

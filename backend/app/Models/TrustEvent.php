@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
-#[Fillable(['user_id', 'type', 'subject_type', 'subject_id', 'value', 'occurred_at'])]
+#[Fillable(['user_id', 'counterparty_id', 'type', 'subject_type', 'subject_id', 'value', 'discount_reason', 'occurred_at'])]
 class TrustEvent extends Model
 {
     /** @use HasFactory<TrustEventFactory> */
@@ -22,6 +22,16 @@ class TrustEvent extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * The other student involved (lender, buyer, rater or voucher).
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function counterparty(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'counterparty_id');
     }
 
     /**
@@ -41,6 +51,7 @@ class TrustEvent extends Model
     {
         return [
             'type' => TrustEventType::class,
+            'counterparty_id' => 'integer',
             'value' => 'integer',
             'occurred_at' => 'datetime',
         ];

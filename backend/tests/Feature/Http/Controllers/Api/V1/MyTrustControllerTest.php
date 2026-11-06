@@ -27,12 +27,12 @@ class MyTrustControllerTest extends TestCase
         $this->withToken(JWTAuth::fromUser($user))
             ->getJson(route('api.v1.me.trust'))
             ->assertOk()
-            ->assertJsonPath('data.score', 545)
+            ->assertJsonPath('data.score', 520)
             ->assertJsonPath('data.tier', 'basic')
             ->assertJsonPath('data.max_loan', 20)
             ->assertJsonPath('data.breakdown.marketplace', 20)
-            ->assertJsonPath('data.breakdown.account', 25)
+            ->assertJsonPath('data.flags', ['new_account'])
             ->assertJsonCount(1, 'data.history')
-            ->assertJsonPath('data.history.0.score', 545);
+            ->assertJsonPath('data.history.0.score', 520);
     }
 }

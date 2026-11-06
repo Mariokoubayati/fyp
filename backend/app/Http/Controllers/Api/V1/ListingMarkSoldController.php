@@ -26,8 +26,10 @@ class ListingMarkSoldController extends Controller
             'sold_at' => now(),
         ])->save();
 
-        $trust->record($listing->seller, TrustEventType::SaleCompleted, $listing);
-        $trust->record(User::findOrFail($listing->buyer_id), TrustEventType::PurchaseCompleted, $listing);
+        $buyer = User::findOrFail($listing->buyer_id);
+
+        $trust->record($listing->seller, TrustEventType::SaleCompleted, $listing, counterparty: $buyer);
+        $trust->record($buyer, TrustEventType::PurchaseCompleted, $listing, counterparty: $listing->seller);
 
         return new ListingResource($listing->load(['seller', 'course']));
     }

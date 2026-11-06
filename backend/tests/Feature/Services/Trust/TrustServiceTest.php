@@ -21,8 +21,8 @@ class TrustServiceTest extends TestCase
         app(TrustService::class)->record($user, TrustEventType::SaleCompleted, $listing);
 
         $user->refresh();
-        $this->assertSame(545, $user->trust_score);
-        $this->assertDatabaseHas('trust_score_logs', ['user_id' => $user->id, 'score' => 545, 'trigger' => 'sale_completed']);
+        $this->assertSame(520, $user->trust_score);
+        $this->assertDatabaseHas('trust_score_logs', ['user_id' => $user->id, 'score' => 520, 'trigger' => 'sale_completed']);
     }
 
     public function test_recording_the_same_event_twice_counts_once(): void
@@ -35,7 +35,7 @@ class TrustServiceTest extends TestCase
         $trust->record($user, TrustEventType::SaleCompleted, $listing);
 
         $this->assertSame(1, $user->trustEvents()->count());
-        $this->assertSame(545, $user->refresh()->trust_score);
+        $this->assertSame(520, $user->refresh()->trust_score);
     }
 
     public function test_forgetting_an_event_takes_its_points_back(): void
@@ -45,10 +45,10 @@ class TrustServiceTest extends TestCase
         $trust = app(TrustService::class);
 
         $trust->record($user, TrustEventType::VouchReceived, $voucher);
-        $this->assertSame(550, $user->refresh()->trust_score);
+        $this->assertSame(525, $user->refresh()->trust_score);
 
         $trust->forget($user, TrustEventType::VouchReceived, $voucher);
-        $this->assertSame(525, $user->refresh()->trust_score);
+        $this->assertSame(500, $user->refresh()->trust_score);
     }
 
     public function test_an_unchanged_score_is_not_logged_again(): void

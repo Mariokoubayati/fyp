@@ -135,11 +135,14 @@ export interface NewLoan {
 
 export type TrustTier = 'restricted' | 'basic' | 'trusted';
 
+export type TrustFlag = 'unverified_email' | 'new_account' | 'circular_lending';
+
 export interface TrustSummary {
   score: number;
   tier: TrustTier;
   max_loan: number;
-  breakdown: Record<'repayment' | 'marketplace' | 'vouches' | 'account' | 'engagement', number>;
+  breakdown: Record<'repayment' | 'marketplace' | 'vouches', number>;
+  flags: TrustFlag[];
   history: { score: number; tier: TrustTier; trigger: string | null; created_at: string }[];
 }
 

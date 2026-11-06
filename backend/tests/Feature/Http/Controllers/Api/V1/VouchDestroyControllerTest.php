@@ -23,14 +23,14 @@ class VouchDestroyControllerTest extends TestCase
         $student = User::factory()->create();
         $token = JWTAuth::fromUser($voucher);
         $this->withToken($token)->putJson(route('api.v1.users.vouch.store', $student))->assertNoContent();
-        $this->assertSame(550, $student->refresh()->trust_score);
+        $this->assertSame(525, $student->refresh()->trust_score);
 
         $this->withToken($token)
             ->deleteJson(route('api.v1.users.vouch.destroy', $student))
             ->assertNoContent();
 
         $this->assertSame(0, Vouch::count());
-        $this->assertSame(525, $student->refresh()->trust_score);
+        $this->assertSame(500, $student->refresh()->trust_score);
     }
 
     public function test_returns_204_when_there_was_no_vouch(): void

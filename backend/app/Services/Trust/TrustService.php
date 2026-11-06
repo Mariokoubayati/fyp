@@ -13,16 +13,26 @@ use Illuminate\Database\Eloquent\Model;
  */
 class TrustService
 {
-    public function __construct(private readonly TrustScoreCalculator $calculator) {}
+    public function __construct(
+        private readonly TrustScoreCalculator $calculator,
+        private readonly CollusionDetector $collusion,
+    ) {}
 
     /**
      * Record that something trust-relevant happened, then refresh the stored score.
      *
      * Recording is idempotent per (student, event type, subject), so retries and
-     * repeated joins/leaves cannot inflate the score.
+     * repeated joins/leaves cannot inflate the score. The counterparty is the other
+     * student involved; a discount reason keeps the event on record without counting it.
      */
-    public function record(User $user, TrustEventType $type, Model $subject, ?int $value = null): void
-    {
+    public function record(
+        User $user,
+        TrustEventType $type,
+        Model $subject,
+        ?int $value = null,
+        ?User $counterparty = null,
+        ?string $discountReason = null,
+    ): void {
         TrustEvent::firstOrCreate(
             [
                 'user_id' => $user->id,
@@ -30,7 +40,12 @@ class TrustService
                 'subject_type' => $subject->getMorphClass(),
                 'subject_id' => $subject->getKey(),
             ],
-            ['value' => $value, 'occurred_at' => now()],
+            [
+                'counterparty_id' => $counterparty?->id,
+                'value' => $value,
+                'discount_reason' => $discountReason,
+                'occurred_at' => now(),
+            ],
         );
 
         $this->refresh($user, $type->value);
@@ -56,7 +71,12 @@ class TrustService
      */
     public function current(User $user): TrustScore
     {
-        return $this->calculator->calculate($user, $user->trustEvents()->get(), now());
+        return $this->calculator->calculate(
+            $user,
+            $user->trustEvents()->get(),
+            now(),
+            $this->collusion->signalsFor($user, now()),
+        );
     }
 
     /**
@@ -72,7 +92,7 @@ class TrustService
                 'user_id' => $user->id,
                 'score' => $result->score,
                 'tier' => $result->tier,
-                'breakdown' => $result->breakdown,
+                'breakdown' => [...$result->breakdown, 'flags' => $result->flags],
                 'trigger' => $trigger,
             ]);
         }

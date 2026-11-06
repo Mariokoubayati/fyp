@@ -65,19 +65,12 @@ class LoanStoreControllerTest extends TestCase
 
     public function test_a_trusted_student_can_borrow_up_to_100(): void
     {
-        $borrower = User::factory()->create();
+        $borrower = User::factory()->create(['created_at' => now()->subMonths(2)]);
 
-        // Lift the score for real through the event log so the tier is derived, not faked.
-        $events = [
-            [TrustEventType::LoanRepaidOnTime, Loan::factory()->create()],
-            [TrustEventType::LoanRepaidOnTime, Loan::factory()->create()],
-            [TrustEventType::LoanRepaidOnTime, Loan::factory()->create()],
-            [TrustEventType::LoanRepaidOnTime, Loan::factory()->create()],
-            [TrustEventType::VouchReceived, User::factory()->create()],
-            [TrustEventType::VouchReceived, User::factory()->create()],
-        ];
-        foreach ($events as [$type, $subject]) {
-            app(TrustService::class)->record($borrower, $type, $subject);
+        // Lift the score for real through the event log so the tier is derived, not faked:
+        // five on-time repayments to five different lenders (+200).
+        foreach (Loan::factory()->active()->count(5)->create() as $loan) {
+            app(TrustService::class)->record($borrower, TrustEventType::LoanRepaidOnTime, $loan, counterparty: $loan->lender);
         }
 
         $this->withToken(JWTAuth::fromUser($borrower))
