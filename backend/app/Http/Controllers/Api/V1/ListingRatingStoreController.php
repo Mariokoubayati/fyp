@@ -29,7 +29,7 @@ class ListingRatingStoreController extends Controller
         $rating->ratee_id = $listing->seller_id;
         $rating->save();
 
-        $trust->record($listing->seller, TrustEventType::RatingReceived, $listing, $rating->stars);
+        $trust->record($listing->seller, TrustEventType::RatingReceived, $listing, $rating->stars, counterparty: $user);
 
         return response()->json(['data' => ['stars' => $rating->stars, 'comment' => $rating->comment]], 201);
     }

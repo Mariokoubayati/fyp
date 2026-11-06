@@ -30,7 +30,7 @@ class VouchStoreControllerTest extends TestCase
             ->assertNoContent();
 
         $this->assertDatabaseHas('vouches', ['voucher_id' => $voucher->id, 'vouchee_id' => $student->id]);
-        $this->assertSame(550, $student->refresh()->trust_score);
+        $this->assertSame(525, $student->refresh()->trust_score);
     }
 
     public function test_vouching_twice_counts_once(): void
@@ -43,7 +43,7 @@ class VouchStoreControllerTest extends TestCase
         $this->withToken($token)->putJson(route('api.v1.users.vouch.store', $student))->assertNoContent();
 
         $this->assertSame(1, Vouch::count());
-        $this->assertSame(550, $student->refresh()->trust_score);
+        $this->assertSame(525, $student->refresh()->trust_score);
     }
 
     public function test_returns_422_when_vouching_for_yourself(): void

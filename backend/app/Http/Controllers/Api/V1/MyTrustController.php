@@ -22,6 +22,7 @@ class MyTrustController extends Controller
             'tier' => $result->tier,
             'max_loan' => $result->maxLoan,
             'breakdown' => $result->breakdown,
+            'flags' => $result->flags,
             'history' => $user->trustScoreLogs()
                 ->latest('id')
                 ->limit(20)

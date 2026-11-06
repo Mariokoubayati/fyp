@@ -88,7 +88,7 @@ class ListingMarkSoldControllerTest extends TestCase
 
         $this->assertDatabaseHas('trust_events', ['user_id' => $listing->seller_id, 'type' => 'sale_completed', 'subject_id' => $listing->id]);
         $this->assertDatabaseHas('trust_events', ['user_id' => $buyer->id, 'type' => 'purchase_completed', 'subject_id' => $listing->id]);
-        $this->assertSame(545, $listing->seller->refresh()->trust_score);
-        $this->assertSame(535, $buyer->refresh()->trust_score);
+        $this->assertSame(520, $listing->seller->refresh()->trust_score);
+        $this->assertSame(510, $buyer->refresh()->trust_score);
     }
 }

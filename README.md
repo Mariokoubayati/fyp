@@ -77,7 +77,7 @@ Base path: `/api/v1`. Authenticated routes need `Authorization: Bearer <token>`.
 | DELETE | `/study-groups/{id}` | creator | Cancel a group |
 | PUT | `/study-groups/{id}/membership` | verified | Join (409 when full or already started) |
 | DELETE | `/study-groups/{id}/membership` | yes | Leave (the creator cannot leave) |
-| GET | `/me/trust` | yes | Your score, tier, component breakdown and history |
+| GET | `/me/trust` | yes | Your score, tier, component breakdown, flags and history |
 | GET | `/users/{id}/trust` | yes | Another student's `score`, `tier`, `max_loan` |
 | GET | `/users?search=` | yes | Find students by name (id, name, major only) |
 | GET | `/loans` | yes | Open requests from others; `?role=borrowed` or `?role=lent` for your own |
@@ -105,9 +105,22 @@ UniCircle is a ledger: no money moves through the app. A loan goes `requested ->
 or `active -> overdue -> defaulted` (and still `-> repaid` late). All transitions go through `LoanStateMachine`.
 `php artisan loans:process-due` (scheduled daily) moves unpaid loans to overdue/defaulted and writes trust events.
 
-The trust score is rule-based and explainable (`config/trust.php`): baseline 500 plus five capped components
-(repayment 40%, marketplace 20%, vouches 15%, account 10%, engagement 15%), clamped to 0-1000.
-Tiers: below 400 no borrowing, 400-699 up to $20, 700+ up to $100.
+The trust score is rule-based and explainable (`config/trust.php`): baseline 500 plus three capped components
+(repayment 60%, marketplace 25%, vouches 15% of a +/-500 range), clamped to 0-1000.
+Tiers: below 400 no borrowing, 400-699 up to $20, 700+ up to $100. A new verified student starts at 500 (basic).
+
+Anti-collusion rules, because no money moves and friends could fake activity:
+
+| Rule | Effect |
+| --- | --- |
+| Same-pair cap | Only 2 rewards per partner per component in any 90 days |
+| Minimum loan duration | A loan repaid within 48h of handover is logged but earns nothing |
+| Lender diversity | Repayment rewards x min(1, different lenders / 3) |
+| Vouch rules | Vouches from unverified or sub-400 students count 0; mutual vouches count half |
+| Circular lending | A->B->A or A->B->C->A within 90 days holds the tier at basic (flag `circular_lending`) |
+| New account | Accounts under 14 days old cannot reach the top tier (flag `new_account`) |
+
+Penalties are never capped. `tests/Feature/Services/Trust/CollusionAttackTest.php` runs the attacks through the API.
 
 ## Branch and review rules
 

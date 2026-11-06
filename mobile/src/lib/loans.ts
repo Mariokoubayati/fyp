@@ -1,4 +1,4 @@
-import { Loan, LoanStatus, TrustTier } from '../api/types';
+import { Loan, LoanStatus, TrustFlag, TrustTier } from '../api/types';
 
 export const STATUS_LABELS: Record<LoanStatus, string> = {
   requested: 'Looking for a lender',
@@ -14,6 +14,14 @@ export const TIER_LABELS: Record<TrustTier, string> = {
   restricted: 'Restricted',
   basic: 'Basic',
   trusted: 'Trusted',
+};
+
+/** Why the tier is held back, in words a student understands. */
+export const FLAG_MESSAGES: Record<TrustFlag, string> = {
+  unverified_email: 'Verify your university email to start borrowing.',
+  new_account: 'New accounts stay at Basic for their first 14 days.',
+  circular_lending:
+    'Loans went back and forth within a small circle, so your tier stays at Basic for now.',
 };
 
 /** Which action the signed-in student can take next, if any. */

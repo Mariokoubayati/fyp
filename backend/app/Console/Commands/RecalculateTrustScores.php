@@ -16,7 +16,7 @@ class RecalculateTrustScores extends Command
     /**
      * @var string
      */
-    protected $description = 'Recompute every student\'s trust score (account age grows with time)';
+    protected $description = 'Recompute every student\'s trust score (new accounts leave the waiting period, circles change over time)';
 
     /**
      * Execute the console command.

@@ -43,7 +43,8 @@ class LoanConfirmRepaymentControllerTest extends TestCase
             ->assertJsonPath('data.status', 'repaid');
 
         $this->assertDatabaseHas('trust_events', ['user_id' => $loan->borrower_id, 'type' => 'loan_repaid_on_time', 'subject_id' => $loan->id]);
-        $this->assertSame(565, $loan->borrower->refresh()->trust_score);
+        // One lender so far: a third of the 40 points (lender diversity).
+        $this->assertSame(513, $loan->borrower->refresh()->trust_score);
     }
 
     public function test_repaying_an_overdue_loan_counts_as_late(): void

@@ -33,7 +33,7 @@ class VouchStoreController extends Controller
             $vouch->save();
         }
 
-        $trust->record($user, TrustEventType::VouchReceived, $voucher);
+        $trust->record($user, TrustEventType::VouchReceived, $voucher, counterparty: $voucher);
 
         return response()->noContent();
     }

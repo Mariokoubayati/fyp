@@ -28,7 +28,7 @@ class ListingRatingStoreControllerTest extends TestCase
             ->assertJsonPath('data.stars', 5);
 
         $this->assertDatabaseHas('listing_ratings', ['listing_id' => $listing->id, 'rater_id' => $buyer->id, 'ratee_id' => $listing->seller_id, 'stars' => 5]);
-        $this->assertSame(545, $listing->seller->refresh()->trust_score);
+        $this->assertSame(520, $listing->seller->refresh()->trust_score);
     }
 
     public function test_a_one_star_rating_lowers_the_sellers_score(): void
@@ -40,7 +40,7 @@ class ListingRatingStoreControllerTest extends TestCase
             ->postJson(route('api.v1.listings.rating.store', $listing), ['stars' => 1])
             ->assertCreated();
 
-        $this->assertSame(505, $listing->seller->refresh()->trust_score);
+        $this->assertSame(480, $listing->seller->refresh()->trust_score);
     }
 
     public function test_returns_403_when_someone_other_than_the_buyer_rates(): void
