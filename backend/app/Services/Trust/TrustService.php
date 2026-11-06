@@ -16,6 +16,8 @@ class TrustService
     public function __construct(
         private readonly TrustScoreCalculator $calculator,
         private readonly CollusionDetector $collusion,
+        private readonly TrustHistoryBuilder $history,
+        private readonly TrustModelClient $model,
     ) {}
 
     /**
@@ -67,15 +69,78 @@ class TrustService
     }
 
     /**
-     * Compute the current score without storing anything.
+     * The score and the tier a decision should use right now: the rules, then the AI model's risk check.
      */
     public function current(User $user): TrustScore
+    {
+        $signals = $this->collusion->signalsFor($user, now());
+
+        return $this->withModelRisk($user, $this->rulesOnly($user, $signals), $signals);
+    }
+
+    /**
+     * The explainable rule-based score alone (what is stored and logged).
+     */
+    public function rulesOnly(User $user, ?CollusionSignals $signals = null): TrustScore
     {
         return $this->calculator->calculate(
             $user,
             $user->trustEvents()->get(),
             now(),
-            $this->collusion->signalsFor($user, now()),
+            $signals ?? $this->collusion->signalsFor($user, now()),
+        );
+    }
+
+    /**
+     * Ask the AI model how risky each loan size the rules allow would be, and lower the tier
+     * to the largest size it considers safe. The model can only lower a tier, never raise it,
+     * and if it is unavailable the rules decide alone.
+     */
+    private function withModelRisk(User $user, TrustScore $rules, CollusionSignals $signals): TrustScore
+    {
+        if ($rules->maxLoan === 0 || ! $this->model->enabled()) {
+            return $rules;
+        }
+
+        $tiers = collect(config('trust.tiers'))
+            ->filter(fn (array $tier): bool => $tier['max_loan'] > 0 && $tier['max_loan'] <= $rules->maxLoan)
+            ->sortBy('max_loan')
+            ->values();
+
+        $result = $this->model->assess(
+            $this->history->build($user, now(), $signals),
+            $tiers->pluck('max_loan')->all(),
+        );
+
+        if ($result === null) {
+            return $rules;
+        }
+
+        $allowed = collect($result['assessments'])->keyBy(fn (array $a): int => (int) $a['amount']);
+        $model = ['version' => $result['version'], 'p_default' => (float) ($result['assessments'][0]['p_default'] ?? 0)];
+
+        // The largest tier whose loan size, and every smaller one, the model allows.
+        $safe = null;
+        foreach ($tiers as $tier) {
+            if (! ($allowed[$tier['max_loan']]['allowed'] ?? false)) {
+                break;
+            }
+            $safe = $tier;
+        }
+
+        $safe ??= $this->calculator->tierFor(0);
+
+        if ($safe['max_loan'] === $rules->maxLoan) {
+            return new TrustScore($rules->score, $rules->tier, $rules->maxLoan, $rules->breakdown, $rules->flags, $model);
+        }
+
+        return new TrustScore(
+            $rules->score,
+            $safe['name'],
+            $safe['max_loan'],
+            $rules->breakdown,
+            [...$rules->flags, TrustScoreCalculator::FLAG_MODEL_RISK],
+            $model,
         );
     }
 
@@ -84,7 +149,7 @@ class TrustService
      */
     public function refresh(User $user, ?string $trigger = null): TrustScore
     {
-        $result = $this->current($user);
+        $result = $this->rulesOnly($user);
         $lastLogged = $user->trustScoreLogs()->latest('id')->value('score');
 
         if ($lastLogged === null || $lastLogged !== $result->score) {

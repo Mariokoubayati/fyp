@@ -35,7 +35,7 @@ Penalties (overdue, default) are never reduced by these rules.
 
 Two friends lending back and forth, and a ring of three, are both flagged and stay at Basic. The trade-off: two honest friends who genuinely lend to each other are also held at Basic ($20). We accept this. They can still borrow, and the flag clears once the loans leave the 90-day window.
 
-### 2. AI calibration plan
+### 2. AI calibration plan: Done (first results below)
 
 **a. What "calibration" means.** A score is calibrated when the default rate we observe matches the risk the score predicts. If 100 students are predicted to have a 5% chance of default, about 5 of them should default. We measure this with a reliability diagram (predicted vs observed default rate per score band) and the Brier score.
 
@@ -49,16 +49,28 @@ Two friends lending back and forth, and a ring of three, are both flagged and st
 | Strategic defaulter | ~8% | Repays small loans to build a score, then defaults on a large one |
 | Collusion ring | ~7% | Groups of 2 to 4 that trade fake loans, then one member borrows from an outsider and defaults |
 
-Whether a loan defaults depends only on the hidden reliability, the loan size and the type. The trust rules never see the hidden values. Bad actors are injected at known rates so we can measure how many each method catches.
+Whether a loan defaults depends only on the hidden reliability, the loan size, the type and an exam-season shock that no feature can see. The trust rules never see the hidden values, and the generator never uses the rules. Bad actors are injected at known rates so we can measure how many each method catches. They also behave realistically: rings cash out at the $15 to $25 Basic limit, and strategic defaulters grow their loans slowly so the last one does not stand out.
 
 **c. How we show the AI beats the rule-based baseline.** Task: predict whether a student's next loan defaults, using only their history before that loan.
 
-- **Baseline:** the current rule-based score.
+- **Baselines:** the current rule-based score, and a stronger one that adds the loan size, so the model gets no credit just for seeing the amount.
 - **Models:** logistic regression and gradient boosting on behavior features (repayment rate, number of different lenders, how much activity is with the same partners, loan size compared with past loans, vouch reciprocity).
 - **Metrics:** ROC-AUC, Brier score, reliability diagram, money lost at the same approval rate, and the share of ring members caught.
 - **Against circularity:** we also test on (1) a generator with shifted parameters, and (2) a bad-actor type left out of training. If the model only learned our generator, it will fail these tests, and we will report that honestly.
 
-The model runs in a Python (Flask) service. Laravel calls it and falls back to the rule-based score if the service is down. The rule-based score stays as the explainable baseline.
+**First results** (gradient boosting, the full tables and plots are in `ml/reports/RESULTS.md`):
+
+| Test | Rules AUC | Rules + amount AUC | AI AUC | Ring cash-outs caught (AI vs rules) |
+|---|---|---|---|---|
+| New world, same settings | 0.646 | 0.663 | **0.775** | 99% vs 0% |
+| Shifted world | 0.599 | 0.686 | **0.787** | 99% vs 0% |
+| Unseen type (no strategic defaulters in training) | 0.646 | 0.665 | **0.755** | 100% vs 0% |
+
+As a lending decision, adding the AI check to the rules cuts the money lent to students who then default by 16% in the normal world and 27% in the shifted world, while still allowing 99% of the good requests the rules allowed. The model is well calibrated (expected calibration error under 0.02 in every test).
+
+**Limitation we found:** trained without strategic defaulters, the model only ranks 10% of their cash-outs among the riskiest 20% (64% when it has seen them). It still beats the rules on AUC, but it does not discover a new fraud pattern by itself. Retraining as new patterns appear is part of the design.
+
+**How it is used in the app:** the model runs in a Python (Flask) service. For each loan size the rules allow ($20, $100), it predicts the default risk. The tier drops to the largest size with a risk under 30%. The model can only lower a tier, never raise it. The score students see stays the explainable rule-based score, with a message when the AI check lowered their limit. If the service is down, the rules decide alone.
 
 ### 3. Evaluation plan
 
@@ -71,7 +83,7 @@ The model runs in a Python (Flask) service. Laravel calls it and falls back to t
 | Usability | System Usability Scale with 5 to 8 students doing set tasks (find a group, list an item, request a loan, send a message) | SUS score (0 to 100) and observed issues |
 | Load | Simple load test on feed, listings and recommendations | Response times under load |
 
-Today the backend has 236 automated tests, all passing on MySQL 8 and SQLite.
+Today the backend has 243 automated tests, all passing on MySQL 8 and SQLite, and the ML service has 21.
 
 ---
 
@@ -148,8 +160,8 @@ Current week: **Week 9 (Nov 2 to Nov 8)** ◀
 | 1–2 | Sep 7 to Sep 20 | Requirements, mockups, trust score design | ✅ |
 | 3–4 | Sep 21 to Oct 4 | Database design, Laravel and Expo setup, JWT auth | ✅ |
 | 5–8 | Oct 5 to Nov 1 | Identity, study groups, marketplace, lending, rule-based trust score, vouches and ratings | ✅ |
-| **9** ◀ | **Nov 2 to Nov 8** | **MySQL CI, anti-collusion rules, this response** | ✅ |
-| 10 | Nov 9 to Nov 15 | AI trust service (Flask) and its evaluation, verified references | ⬜ |
+| **9** ◀ | **Nov 2 to Nov 8** | **MySQL CI, anti-collusion rules, this response, AI trust service and its evaluation** | ✅ |
+| 10 | Nov 9 to Nov 15 | Verified references, start of the recommender | ⬜ |
 | 11 | Nov 16 to Nov 22 | Recommender (groups, items) and precision@k | ⬜ |
 | 12 | Nov 23 to Nov 29 | Messaging and in-app notifications | ⬜ |
 | 13 | Nov 30 to Dec 6 | Usability study (SUS); stretch: event hub | ⬜ |

@@ -28,6 +28,18 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    /*
+     * The AI trust model (Python/Flask service in /ml). When enabled, it can
+     * lower a student's tier if it predicts a high default risk; it never raises it.
+     * If the service is down the rule-based score is used on its own.
+     */
+    'trust_model' => [
+        'enabled' => (bool) env('TRUST_MODEL_ENABLED', false),
+        'url' => env('TRUST_MODEL_URL', 'http://127.0.0.1:5001'),
+        'token' => env('TRUST_MODEL_TOKEN'),
+        'timeout' => (float) env('TRUST_MODEL_TIMEOUT', 2),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
