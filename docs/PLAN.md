@@ -19,18 +19,18 @@ Status legend: ✅ done · 🟡 in progress · ⬜ not started · 🔵 stretch
 | Study groups (SQL matching by classmates) | ✅ | Ranking upgraded by the recommender in Week 11 |
 | Marketplace (listings, search, sold flow, ratings) | ✅ | |
 | P2P lending ledger (IOU only, state machine, tier caps) | ✅ | |
-| Rule-based trust score (events, tiers, nightly recalc, history) | ✅ | Anti-collusion added in Phase 1 |
+| Rule-based trust score (events, tiers, nightly recalc, history) | ✅ | Anti-collusion added (PR #2) |
 | Vouches + public student profile | ✅ | |
 | Mobile app, 5 tabs (Expo Router) | ✅ | |
-| Backend tests | ✅ | 222 passing (SQLite) on 2026-11-06 |
+| Backend tests | ✅ | 236 passing on MySQL 8 and SQLite, CI on every PR |
 
 ## 2. Phases
 
 | Week | Phase | Work | Done when | Status |
 |---|---|---|---|---|
-| 9 | 0. Hygiene | Root CI running the suite on MySQL 8 and SQLite; fix MySQL-only failures; remove unused `backend/.github` | CI green on MySQL | 🟡 |
-| 9 | 1. Anti-collusion | Same-pair cap, minimum loan duration, counterparty diversity, mutual-vouch discount, voucher tier gate, circular-activity flag; engagement and account-age points removed from the score | Tests show the fake-loan attack stays in the basic tier | ⬜ |
-| 9 | Docs | Written response to the supervisor memo (12 points), trust formula, Must/Should table, revised Gantt | `docs/supervisor-response.md` | ⬜ |
+| 9 | 0. Hygiene | Root CI running the suite on MySQL 8 and SQLite; fix MySQL-only failures; remove unused `backend/.github` | CI green on MySQL | ✅ PR #1 (no MySQL failures found) |
+| 9 | 1. Anti-collusion | Same-pair cap, minimum loan duration, counterparty diversity, mutual-vouch discount, voucher tier gate, circular-activity flag; engagement and account-age points removed from the score | Tests show the fake-loan attack stays in the basic tier | ✅ PR #2 (attack: 885 → 592) |
+| 9 | Docs | Written response to the supervisor memo (12 points), trust formula, Must/Should table, revised Gantt | `docs/supervisor-response.md` | ✅ draft in PR #2 |
 | 10 | 2. AI trust service | Flask service, synthetic data with injected bad actors, rule baseline vs logistic regression / gradient boosting, AUC, Brier, reliability diagram, ring recall; Laravel calls `/trust/score` with rule fallback | Model beats the baseline on held-out and shifted data | ⬜ |
 | 10 | Docs | Verify or replace every proposal reference (DOI or URL) | Every reference checked | ⬜ |
 | 11 | 3. Recommender | Flask: groups + listings (course and schedule overlap, TF-IDF, co-occurrence); Laravel cache; mobile home feed | precision@5 / recall@5 vs SQL baseline | ⬜ |
@@ -68,6 +68,7 @@ In the supervisor response, events, analytics and badges are labeled stretch (hi
 | 2026-11-06 | Trust score drops engagement and account-age points, back to the proposal's three signals: transactions, vouches, repayment |
 | 2026-11-06 | `@ua.edu.lb` confirmed for ZA and BA students |
 | 2026-11-06 | Mario builds all remaining work |
+| 2026-11-06 | Trust weights: repayment 60%, marketplace 25%, vouches 15%; new verified student = 500 = basic |
 
 ## 5. What Mario owns
 
