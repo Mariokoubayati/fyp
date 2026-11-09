@@ -138,9 +138,9 @@ The full test suite now runs on MySQL 8 (strict mode) and SQLite in CI on every 
 
 We checked the full history of the public repository. No `.env` file was ever committed, there are no keys or secrets, and the only email in the seed data is the placeholder `202300000@ua.edu.lb`.
 
-### 10. Proposal and references
+### 10. Proposal and references: Done
 
-In progress (Week 10). Every reference will be checked. Any reference without a DOI or URL will be replaced with a verifiable source before the final phase.
+You were right to ask. We checked all seven references. Two are real (Resnick et al. 2000, Bandura 1977). The other five could not be found in any database, so we removed them, together with the numbers we had attributed to them (for example "4.2 minutes" and "78%"). They are replaced by verified sources with a DOI or URL, including a CHI 2024 study of trust and safety on Facebook Marketplace and a World Bank Economic Review paper on predicting loan repayment from behavior data. The full list and the rewritten sentences are in `docs/references-check.md`, and the proposal will be updated with them.
 
 ---
 
