@@ -1,0 +1,144 @@
+{
+  "version": "rec-lr-1",
+  "training": {
+    "group_rows": 217904,
+    "listing_rows": 135300
+  },
+  "coefficients": {
+    "groups": {
+      "course_enrolled": 1.495,
+      "classmates": 0.761,
+      "co_members": 0.061,
+      "same_major_share": 0.025,
+      "same_year_share": -0.021,
+      "fill_ratio": -0.186,
+      "days_until_start": -0.013,
+      "hour_distance": -0.264,
+      "member_count": -1.055
+    },
+    "listings": {
+      "course_enrolled": 0.803,
+      "text_similarity": 0.071,
+      "category_affinity": 0.161,
+      "relative_price": -0.545,
+      "age_days": -0.184,
+      "seller_is_co_member": 0.035
+    }
+  },
+  "tests": {
+    "same_size_campus": {
+      "groups_model": {
+        "decisions": 4726,
+        "avg_candidates": 14.1,
+        "hit_at_1": 0.5273,
+        "hit_at_3": 0.8857,
+        "hit_at_5": 0.9317,
+        "mrr": 0.7102,
+        "students": 223,
+        "precision_at_5": 0.191,
+        "recall_at_5": 0.9103
+      },
+      "groups_baseline": {
+        "decisions": 4726,
+        "avg_candidates": 14.1,
+        "hit_at_1": 0.4755,
+        "hit_at_3": 0.8398,
+        "hit_at_5": 0.8686,
+        "mrr": 0.6493,
+        "students": 223,
+        "precision_at_5": 0.1812,
+        "recall_at_5": 0.861
+      },
+      "listings_model": {
+        "decisions": 3047,
+        "avg_candidates": 27.2,
+        "hit_at_1": 0.3111,
+        "hit_at_3": 0.5458,
+        "hit_at_5": 0.6442,
+        "mrr": 0.4702,
+        "students": 94,
+        "precision_at_5": 0.1383,
+        "recall_at_5": 0.6862
+      },
+      "listings_newest": {
+        "decisions": 3047,
+        "avg_candidates": 27.2,
+        "hit_at_1": 0.0459,
+        "hit_at_3": 0.1421,
+        "hit_at_5": 0.2222,
+        "mrr": 0.1662,
+        "students": 94,
+        "precision_at_5": 0.0489,
+        "recall_at_5": 0.2447
+      },
+      "listings_my_courses_newest": {
+        "decisions": 3047,
+        "avg_candidates": 27.2,
+        "hit_at_1": 0.2455,
+        "hit_at_3": 0.4943,
+        "hit_at_5": 0.5724,
+        "mrr": 0.4065,
+        "students": 94,
+        "precision_at_5": 0.1362,
+        "recall_at_5": 0.6809
+      }
+    },
+    "larger_campus": {
+      "groups_model": {
+        "decisions": 7945,
+        "avg_candidates": 13.1,
+        "hit_at_1": 0.5586,
+        "hit_at_3": 0.8814,
+        "hit_at_5": 0.9217,
+        "mrr": 0.7248,
+        "students": 257,
+        "precision_at_5": 0.1829,
+        "recall_at_5": 0.9144
+      },
+      "groups_baseline": {
+        "decisions": 7945,
+        "avg_candidates": 13.1,
+        "hit_at_1": 0.5096,
+        "hit_at_3": 0.8422,
+        "hit_at_5": 0.8663,
+        "mrr": 0.6674,
+        "students": 257,
+        "precision_at_5": 0.1712,
+        "recall_at_5": 0.856
+      },
+      "listings_model": {
+        "decisions": 5241,
+        "avg_candidates": 46.0,
+        "hit_at_1": 0.2194,
+        "hit_at_3": 0.4509,
+        "hit_at_5": 0.5695,
+        "mrr": 0.378,
+        "students": 202,
+        "precision_at_5": 0.1109,
+        "recall_at_5": 0.5421
+      },
+      "listings_newest": {
+        "decisions": 5241,
+        "avg_candidates": 46.0,
+        "hit_at_1": 0.0198,
+        "hit_at_3": 0.0611,
+        "hit_at_5": 0.113,
+        "mrr": 0.0988,
+        "students": 202,
+        "precision_at_5": 0.0208,
+        "recall_at_5": 0.104
+      },
+      "listings_my_courses_newest": {
+        "decisions": 5241,
+        "avg_candidates": 46.0,
+        "hit_at_1": 0.1523,
+        "hit_at_3": 0.4009,
+        "hit_at_5": 0.5119,
+        "mrr": 0.3146,
+        "students": 202,
+        "precision_at_5": 0.095,
+        "recall_at_5": 0.4678
+      }
+    }
+  }
+}

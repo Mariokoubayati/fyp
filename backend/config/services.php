@@ -40,6 +40,18 @@ return [
         'timeout' => (float) env('TRUST_MODEL_TIMEOUT', 2),
     ],
 
+    /*
+     * The recommender (same Python service as the trust model). When enabled it
+     * ranks study groups and listings; otherwise, or when it is down, the SQL
+     * ordering is used.
+     */
+    'recommender' => [
+        'enabled' => (bool) env('RECOMMENDER_ENABLED', false),
+        'url' => env('RECOMMENDER_URL', env('TRUST_MODEL_URL', 'http://127.0.0.1:5001')),
+        'token' => env('RECOMMENDER_TOKEN', env('TRUST_MODEL_TOKEN')),
+        'timeout' => (float) env('RECOMMENDER_TIMEOUT', 2),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
