@@ -11,13 +11,15 @@ Final Year Project, Antonine University (Faculty of Engineering and Technology).
 | Mobile app | React Native (Expo) |
 | Backend API | Laravel 13 (PHP 8.3), JWT auth (`php-open-source-saver/jwt-auth`) |
 | Database | MySQL |
-| AI / recommendations | Python + Flask (built last, after all other features) |
+| AI trust model | Python + Flask + scikit-learn (`ml/`) |
 
 ## Repository layout
 
 ```
 backend/   Laravel REST API (/api/v1)
 mobile/    Expo / React Native app
+ml/        Python AI service: trust model, synthetic data, evaluation (see ml/README.md)
+docs/      Build plan and supervisor responses
 ```
 
 ## Backend: run it locally
@@ -49,7 +51,7 @@ DB_CONNECTION=mysql DB_DATABASE=unicircle_test DB_USERNAME=root DB_PASSWORD= \
   php -d variables_order=EGPCS vendor/bin/phpunit
 ```
 
-CI (`.github/workflows/ci.yml`) runs the backend suite on MySQL 8 and SQLite, plus the mobile typecheck and lint, on every pull request.
+CI (`.github/workflows/ci.yml`) runs the backend suite on MySQL 8 and SQLite, the mobile typecheck and lint, and the ML tests, on every pull request.
 
 ## API (v1)
 
@@ -121,6 +123,11 @@ Anti-collusion rules, because no money moves and friends could fake activity:
 | New account | Accounts under 14 days old cannot reach the top tier (flag `new_account`) |
 
 Penalties are never capped. `tests/Feature/Services/Trust/CollusionAttackTest.php` runs the attacks through the API.
+
+**AI risk check.** When `TRUST_MODEL_ENABLED=true`, Laravel sends the student's history to the Flask service, which
+predicts the default risk for each loan size the rules allow. The tier drops to the largest size with risk under 30%.
+The model can only lower a tier, the displayed score stays the rule score, and if the service is down the rules decide
+alone. Results against the rule baseline: [`ml/reports/RESULTS.md`](ml/reports/RESULTS.md).
 
 ## Branch and review rules
 
