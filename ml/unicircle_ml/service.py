@@ -2,8 +2,10 @@
 
     python -m unicircle_ml.service            # http://127.0.0.1:5001
 
-GET  /health         -> {"status": "ok", "model_version": ...}
-POST /trust/assess   -> default risk for one student at one or more loan amounts
+GET  /health               -> {"status": "ok", "model_version": ..., "recommender_version": ...}
+POST /trust/assess         -> default risk for one student at one or more loan amounts
+POST /recommend/groups     -> open study groups ranked for one student
+POST /recommend/listings   -> available listings ranked for one student (formats in recommend.py)
 
 Request:
     {"history": {...shared history format...}, "amounts": [20, 100]}
@@ -25,14 +27,19 @@ from flask import Flask, abort, jsonify, request
 
 from .features import extract, vector
 from .history import History
+from .recommend import group_features, listing_features, rank
 
-DEFAULT_MODEL = Path(__file__).resolve().parent.parent / "models" / "trust_model.joblib"
+MODELS = Path(__file__).resolve().parent.parent / "models"
+DEFAULT_MODEL = MODELS / "trust_model.joblib"
+DEFAULT_RECOMMENDER = MODELS / "recommender.joblib"
+MAX_CANDIDATES = 500
 
 
-def create_app(model_path: Path | str | None = None, token: str | None = None) -> Flask:
+def create_app(model_path: Path | str | None = None, token: str | None = None, recommender_path: Path | str | None = None) -> Flask:
     app = Flask(__name__)
     bundle = joblib.load(model_path or os.environ.get("TRUST_MODEL_PATH", DEFAULT_MODEL))
     model, features, version, threshold = bundle["model"], bundle["features"], bundle["version"], bundle["threshold"]
+    recommender = joblib.load(recommender_path or os.environ.get("RECOMMENDER_PATH", DEFAULT_RECOMMENDER))
     token = token if token is not None else os.environ.get("ML_SERVICE_TOKEN", "")
 
     @app.before_request
@@ -42,7 +49,7 @@ def create_app(model_path: Path | str | None = None, token: str | None = None) -
 
     @app.get("/health")
     def health():
-        return jsonify(status="ok", model_version=version)
+        return jsonify(status="ok", model_version=version, recommender_version=recommender["version"])
 
     @app.post("/trust/assess")
     def assess():
@@ -68,6 +75,39 @@ def create_app(model_path: Path | str | None = None, token: str | None = None) -
                 for amount, p in zip(amounts, risks)
             ],
         )
+
+    def recommendation_request() -> tuple[dict, list[dict], int] | None:
+        body = request.get_json(silent=True) or {}
+        user, candidates = body.get("user"), body.get("candidates")
+        if not isinstance(user, dict) or not isinstance(candidates, list) or len(candidates) > MAX_CANDIDATES:
+            return None
+        return user, candidates, int(body.get("now") or 0)
+
+    @app.post("/recommend/groups")
+    def recommend_groups():
+        parsed = recommendation_request()
+        if parsed is None:
+            return jsonify(error=f"Send a user object and at most {MAX_CANDIDATES} candidates."), 422
+        user, candidates, now = parsed
+        try:
+            rows = [group_features(user, group, now) for group in candidates]
+        except (KeyError, TypeError, ValueError) as exc:
+            return jsonify(error=f"Invalid group: {exc}"), 422
+        ranked = rank(recommender["groups"], recommender["group_features"], rows, [g["id"] for g in candidates])
+        return jsonify(recommender_version=recommender["version"], ranked=ranked)
+
+    @app.post("/recommend/listings")
+    def recommend_listings():
+        parsed = recommendation_request()
+        if parsed is None:
+            return jsonify(error=f"Send a user object and at most {MAX_CANDIDATES} candidates."), 422
+        user, candidates, now = parsed
+        try:
+            rows = listing_features(user, candidates, now)
+        except (KeyError, TypeError, ValueError) as exc:
+            return jsonify(error=f"Invalid listing: {exc}"), 422
+        ranked = rank(recommender["listings"], recommender["listing_features"], rows, [l["id"] for l in candidates])
+        return jsonify(recommender_version=recommender["version"], ranked=ranked)
 
     return app
 

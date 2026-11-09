@@ -1,6 +1,6 @@
 # UniCircle ML service
 
-Python service for the AI trust model. Later it will also serve the recommender.
+Python service for the AI trust model and the recommender.
 
 ## How it fits
 
@@ -28,6 +28,7 @@ Then in `backend/.env`:
 
 ```
 TRUST_MODEL_ENABLED=true
+RECOMMENDER_ENABLED=true
 TRUST_MODEL_URL=http://127.0.0.1:5001
 ```
 
@@ -36,10 +37,17 @@ Optional shared secret: set `ML_SERVICE_TOKEN` here and the same value as `TRUST
 ## Retrain and re-evaluate
 
 ```sh
-python -m unicircle_ml.train
+python -m unicircle_ml.train        # trust model    -> reports/RESULTS.md
+python -m unicircle_ml.rec_train    # recommender    -> reports/RECOMMENDER.md (about 2 minutes)
 ```
 
-This regenerates the synthetic worlds, retrains, and rewrites `models/` and `reports/` (results table in [`reports/RESULTS.md`](reports/RESULTS.md), plots as PNG). Same seeds give the same numbers.
+These regenerate the synthetic data, retrain, and rewrite `models/` and `reports/` (tables in [`RESULTS.md`](reports/RESULTS.md) and [`RECOMMENDER.md`](reports/RECOMMENDER.md), plots as PNG). Same seeds give the same numbers.
+
+## Recommender
+
+Laravel sends the student's profile (courses, major, year, past study partners, hours of past groups, past purchases) and the candidates (open groups with their members, available listings). Python computes the features and ranks them with two small logistic regressions, one for groups and one for listings. If the service is off or down, Laravel falls back to the SQL ordering: groups in your courses by number of classmates, listings for your courses first, then the newest.
+
+The evaluation simulates a campus where students pick groups and items for hidden reasons (friendships, preferred time of day, interests, price sensitivity). The model only sees their traces. Every real choice after day 90 is ranked against everything open at that moment, and we check where the chosen item landed (hit@k, MRR), plus precision@5 and recall@5 at day 90.
 
 ## Tests
 
@@ -56,6 +64,9 @@ python -m pytest -q
 | `unicircle_ml/rules.py` | Python port of the backend's rule-based score (the baseline) |
 | `unicircle_ml/simulate.py` | Synthetic campus lending world with injected bad actors |
 | `unicircle_ml/train.py` | Training, baselines, evaluation, plots |
+| `unicircle_ml/recommend.py` | Recommender features (groups, listings with TF-IDF) and ranking |
+| `unicircle_ml/rec_simulate.py` | Synthetic campus for the recommender (hidden friendships, interests) |
+| `unicircle_ml/rec_train.py` | Recommender training and evaluation against the SQL ordering |
 | `unicircle_ml/service.py` | Flask API |
 
 ## Why the synthetic data is not circular
