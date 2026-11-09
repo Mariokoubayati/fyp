@@ -26,6 +26,16 @@ class ProcessDueLoans extends Command
     {
         $overdue = 0;
         $defaulted = 0;
+        $reminded = 0;
+
+        Loan::query()
+            ->with(['borrower', 'lender'])
+            ->where('status', LoanStatus::Active)
+            ->whereDate('due_date', '>=', today())
+            ->whereDate('due_date', '<=', today()->addDays(config('lending.remind_days_before')))
+            ->each(function (Loan $loan) use ($loans, &$reminded): void {
+                $reminded += (int) $loans->remindDueSoon($loan);
+            });
 
         Loan::query()
             ->with('borrower')
@@ -45,7 +55,7 @@ class ProcessDueLoans extends Command
                 $defaulted++;
             });
 
-        $this->info("Marked {$overdue} loan(s) overdue and {$defaulted} defaulted.");
+        $this->info("Reminded {$reminded} borrower(s), marked {$overdue} loan(s) overdue and {$defaulted} defaulted.");
 
         return self::SUCCESS;
     }

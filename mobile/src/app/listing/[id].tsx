@@ -6,6 +6,7 @@ import { getErrorMessage } from '@/api/errors';
 import { deleteListing, fetchListing, markListingSold, rateSeller, setListingStatus } from '@/api/listings';
 import { Listing, Student } from '@/api/types';
 import { Button } from '@/components/Button';
+import { MessageButton } from '@/components/MessageButton';
 import { Card } from '@/components/Card';
 import { Loading } from '@/components/Loading';
 import { Screen } from '@/components/Screen';
@@ -89,6 +90,10 @@ export default function ListingDetail() {
       </Card>
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
+
+      {!listing.is_seller && listing.seller && listing.status !== 'sold' ? (
+        <MessageButton userId={listing.seller.id} title="Message the seller" />
+      ) : null}
 
       {listing.is_buyer && listing.status === 'sold' ? (
         <Card style={styles.card}>

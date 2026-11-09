@@ -7,6 +7,7 @@ use App\Enums\ListingCondition;
 use App\Enums\ListingStatus;
 use App\Enums\LoanStatus;
 use App\Enums\TrustEventType;
+use App\Models\Conversation;
 use App\Models\Course;
 use App\Models\Listing;
 use App\Models\ListingRating;
@@ -65,6 +66,7 @@ class DemoSeeder extends Seeder
         $this->listings($students, $trust);
         $this->loans($students, $trust);
         $this->vouches($students, $trust);
+        $this->conversations($demo, $students->reject(fn (User $s): bool => $s->is($demo)));
 
         $students->each(fn (User $student) => $trust->refresh($student));
     }
@@ -225,6 +227,33 @@ class DemoSeeder extends Seeder
                 'purpose' => fake()->randomElement(['Lunch', 'Printing', 'Transport']),
                 'due_date' => now()->addDays(fake()->numberBetween(7, 20))->toDateString(),
             ]);
+        }
+    }
+
+    /**
+     * A few chats for the demo login, one of them with an unread reply.
+     *
+     * @param  Collection<int, User>  $others
+     */
+    private function conversations(User $demo, Collection $others): void
+    {
+        $scripts = [
+            [['them', 'Hi! Is your Data Structures summary still available?'], ['me', 'Yes it is, $5. I can bring it tomorrow.'], ['them', 'Perfect, see you at the library at 11.']],
+            [['me', 'Are you joining the Database Systems review on Thursday?'], ['them', 'Yes! Can you share the practice questions before?']],
+            [['them', 'Thanks for the loan, I will pay you back on Friday.']],
+        ];
+
+        foreach ($others->random(count($scripts))->values() as $i => $other) {
+            $conversation = Conversation::between($demo, $other);
+            $sentAt = now()->subHours(count($scripts[$i]) * 3 + $i * 24);
+
+            foreach ($scripts[$i] as [$who, $body]) {
+                $sentAt = $sentAt->copy()->addHours(2);
+                $message = $conversation->messages()->create(['sender_id' => ($who === 'me' ? $demo : $other)->id, 'body' => $body]);
+                $message->forceFill(['created_at' => $sentAt, 'updated_at' => $sentAt, 'read_at' => $i === 0 && $who === 'them' ? null : $sentAt])->save();
+            }
+
+            $conversation->forceFill(['last_message_at' => $sentAt])->save();
         }
     }
 

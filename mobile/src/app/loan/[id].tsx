@@ -6,6 +6,7 @@ import { getErrorMessage } from '@/api/errors';
 import { actOnLoan, fetchLoan } from '@/api/loans';
 import { Loan } from '@/api/types';
 import { Button } from '@/components/Button';
+import { MessageButton } from '@/components/MessageButton';
 import { Card } from '@/components/Card';
 import { Loading } from '@/components/Loading';
 import { Screen } from '@/components/Screen';
@@ -75,6 +76,10 @@ export default function LoanDetail() {
           </Text>
         ) : null}
       </Card>
+
+      {loan.my_role === 'borrower' && loan.lender ? <MessageButton userId={loan.lender.id} title="Message the lender" /> : null}
+      {loan.my_role === 'lender' && loan.borrower ? <MessageButton userId={loan.borrower.id} title="Message the borrower" /> : null}
+      {loan.my_role === null && loan.borrower ? <MessageButton userId={loan.borrower.id} title="Ask the borrower a question" /> : null}
 
       {step?.kind === 'confirm-handover' ? (
         <Text style={[typography.caption, styles.note]}>

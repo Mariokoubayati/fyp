@@ -3,6 +3,7 @@ import { Tabs } from 'expo-router';
 import { ColorValue } from 'react-native';
 import { ComponentProps } from 'react';
 
+import { HeaderActions } from '@/components/HeaderActions';
 import { colors } from '@/theme';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
@@ -21,7 +22,10 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: colors.textMuted,
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Home', tabBarIcon: tabIcon('home', 'home-outline') }} />
+      <Tabs.Screen
+        name="index"
+        options={{ title: 'Home', tabBarIcon: tabIcon('home', 'home-outline'), headerRight: () => <HeaderActions /> }}
+      />
       <Tabs.Screen name="groups" options={{ title: 'Study Groups', tabBarIcon: tabIcon('people', 'people-outline') }} />
       <Tabs.Screen name="market" options={{ title: 'Marketplace', tabBarIcon: tabIcon('pricetag', 'pricetag-outline') }} />
       <Tabs.Screen name="wallet" options={{ title: 'Lending', tabBarIcon: tabIcon('wallet', 'wallet-outline') }} />

@@ -1,0 +1,31 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * A private chat between exactly two students. The pair is stored with the lower id first,
+     * so there is only ever one conversation per pair.
+     */
+    public function up(): void
+    {
+        Schema::create('conversations', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_one_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('user_two_id')->constrained('users')->cascadeOnDelete();
+            $table->timestamp('last_message_at')->nullable()->index();
+            $table->timestamps();
+
+            $table->unique(['user_one_id', 'user_two_id']);
+            $table->index('user_two_id');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('conversations');
+    }
+};

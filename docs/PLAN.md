@@ -22,7 +22,8 @@ Status legend: ✅ done · 🟡 in progress · ⬜ not started · 🔵 stretch
 | Rule-based trust score (events, tiers, nightly recalc, history) | ✅ | Anti-collusion added (PR #2) |
 | Vouches + public student profile | ✅ | |
 | Mobile app, 5 tabs (Expo Router) | ✅ | |
-| Backend tests | ✅ | 249 passing on MySQL 8 and SQLite + 30 ML tests, CI on every PR |
+| Backend tests | ✅ | 272 passing on MySQL 8 and SQLite + 30 ML tests, CI on every PR |
+| Messaging + notifications | ✅ | PR #5: chats, block/report, notifications list, header badges |
 | Home feed + recommender | ✅ | PR #4: groups and listings picked for you |
 | Demo data | ✅ | PR #4: `DemoSeeder` (40 students, groups, listings, loans) for demos and the SUS study |
 | AI trust model (Flask, gradient boosting) | ✅ | Can only lower a tier; rules decide if the service is down |
@@ -37,7 +38,7 @@ Status legend: ✅ done · 🟡 in progress · ⬜ not started · 🔵 stretch
 | 10 | 2. AI trust service | Flask service, synthetic data with injected bad actors, rule baseline vs logistic regression / gradient boosting, AUC, Brier, reliability diagram, ring recall; Laravel calls `/trust/assess` with rule fallback | Model beats the baseline on held-out and shifted data | ✅ PR #3 (AUC 0.775 vs 0.646; done early, Week 9) |
 | 10 | Docs | Verify or replace every proposal reference (DOI or URL) | Every reference checked | ✅ 2 of 7 real; 5 replaced (`docs/references-check.md`); proposal .docx still to update |
 | 11 | 3. Recommender | Flask: groups + listings (course, classmates, past partners, time of day, TF-IDF, price); Laravel cache; mobile home feed | precision@5 / recall@5 vs SQL baseline | ✅ PR #4 (done early, Week 10) |
-| 12 | 4. Messaging + notifications | 1:1 chat from profile, listing, loan; polling; bodies encrypted at rest + HTTPS; block/report; in-app notifications (database channel) for loans and messages | Two phones chat, DB stores ciphertext, due-loan reminder appears | ⬜ |
+| 12 | 4. Messaging + notifications | 1:1 chat from profile, listing, loan; polling; bodies encrypted at rest + HTTPS; block/report; in-app notifications (database channel) for loans and messages | Two phones chat, DB stores ciphertext, due-loan reminder appears | ✅ PR #5 (done early, Week 10); phone test pending |
 | 13 | 5. Events hub + evaluation | Events (create, RSVP, tags) + event recommendations; SUS kit (tasks, form, scoring script) | Mario runs SUS with 5 to 8 students | ⬜ |
 | 14 | 6. Analytics + badges, freeze | Personal dashboard, badge rules; security pass; load test on feed, listings, recommendations | Feature freeze | ⬜ |
 | 15–16 | Report + defense | Chapters, slides, two rehearsals | | ⬜ |
@@ -75,6 +76,7 @@ In the supervisor response, events, analytics and badges are labeled stretch (hi
 | 2026-11-06 | AI model gates the tier (block a size when risk ≥ 30%), never raises it; displayed score stays rule-based |
 | 2026-11-06 | Laravel sends raw history, Python computes features (one implementation) |
 | 2026-11-09 | Recommender uses the same pattern; SQL ordering stays as fallback and as the evaluation baseline |
+| 2026-11-09 | Any verified student can message any other; block stops both ways; 3 unreviewed reports from different students stop new chats |
 
 ## 5. What Mario owns
 

@@ -30,4 +30,9 @@ return [
      */
     'default_after_days' => 14,
 
+    /*
+     * Days before the due date when the borrower gets a reminder.
+     */
+    'remind_days_before' => 2,
+
 ];

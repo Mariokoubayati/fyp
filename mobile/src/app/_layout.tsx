@@ -20,6 +20,9 @@ function RootStack() {
         <Stack.Screen name="loan/[id]" options={{ headerShown: true, title: 'Loan' }} />
         <Stack.Screen name="listing/new" options={{ headerShown: true, title: 'Sell an item' }} />
         <Stack.Screen name="listing/[id]" options={{ headerShown: true, title: 'Listing' }} />
+        <Stack.Screen name="messages/index" options={{ headerShown: true, title: 'Messages' }} />
+        <Stack.Screen name="messages/[id]" options={{ headerShown: true, title: 'Chat' }} />
+        <Stack.Screen name="notifications" options={{ headerShown: true, title: 'Notifications' }} />
       </Stack.Protected>
       <Stack.Protected guard={!user}>
         <Stack.Screen name="sign-in" />

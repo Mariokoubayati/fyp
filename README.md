@@ -88,6 +88,15 @@ Base path: `/api/v1`. Authenticated routes need `Authorization: Bearer <token>`.
 | DELETE | `/study-groups/{id}/membership` | yes | Leave (the creator cannot leave) |
 | GET | `/me/trust` | yes | Your score, tier, component breakdown, flags and history |
 | GET | `/recommendations` | yes | Home feed: 5 study groups and 5 listings picked for you, plus `source` (`model` or `rules`) |
+| GET | `/conversations` | yes | Your chats, latest first, with preview and unread count |
+| POST | `/conversations` | verified | Open the chat with a student (`user_id`); returns the existing one if any |
+| GET | `/conversations/{id}/messages` | yes | Latest 50 messages, or only those after `?after=<id>` (the app polls every 4 s); marks them read |
+| POST | `/conversations/{id}/messages` | yes | Send a message (`body`, max 2000 chars, 30 per minute) |
+| PUT / DELETE | `/users/{id}/block` | yes | Block or unblock a student (no messages either way) |
+| POST | `/users/{id}/report` | yes | Report a student (`reason`: harassment, spam, scam, inappropriate, other) |
+| GET | `/notifications` | yes | Latest 50 notifications and the unread count |
+| POST | `/notifications/read` | yes | Mark all, or the given `ids`, as read |
+| GET | `/me/badges` | yes | Unread messages and notifications for the header badges |
 | GET | `/users/{id}/trust` | yes | Another student's `score`, `tier`, `max_loan` |
 | GET | `/users?search=` | yes | Find students by name (id, name, major only) |
 | GET | `/loans` | yes | Open requests from others; `?role=borrowed` or `?role=lent` for your own |
@@ -131,6 +140,8 @@ Anti-collusion rules, because no money moves and friends could fake activity:
 | New account | Accounts under 14 days old cannot reach the top tier (flag `new_account`) |
 
 Penalties are never capped. `tests/Feature/Services/Trust/CollusionAttackTest.php` runs the attacks through the API.
+
+**Messaging.** Message bodies are encrypted at rest with Laravel's `encrypted` cast (AES-256 with the app key), and traffic is encrypted in transit over HTTPS when deployed. There is no end-to-end encryption. A block stops messages both ways. Unreviewed reports from 3 different students stop a student from starting new chats (replies still work) until `reviewed_at` is set on the reports. In-app notifications cover new messages (one per conversation until read), accepted loans, loans due in 2 days and overdue loans.
 
 **AI risk check.** When `TRUST_MODEL_ENABLED=true`, Laravel sends the student's history to the Flask service, which
 predicts the default risk for each loan size the rules allow. The tier drops to the largest size with risk under 30%.
