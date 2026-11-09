@@ -8,11 +8,14 @@ import { StudentProfile } from '@/api/types';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Loading } from '@/components/Loading';
+import { MessageButton } from '@/components/MessageButton';
 import { Screen } from '@/components/Screen';
+import { useAuth } from '@/context/AuthContext';
 import { TIER_LABELS } from '@/lib/loans';
 import { colors, spacing, typography } from '@/theme';
 
 export default function StudentScreen() {
+  const { user } = useAuth();
   const { id } = useLocalSearchParams<{ id: string }>();
   const studentId = Number(id);
   const [student, setStudent] = useState<StudentProfile | null>(null);
@@ -70,6 +73,8 @@ export default function StudentScreen() {
       </Card>
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
+
+      {student.id !== user?.id ? <MessageButton userId={student.id} title={`Message ${student.name}`} /> : null}
 
       <Button
         title={student.vouched_by_me ? 'Withdraw my vouch' : 'Vouch for this student'}

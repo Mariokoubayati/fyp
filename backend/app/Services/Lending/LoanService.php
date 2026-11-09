@@ -7,6 +7,9 @@ use App\Enums\TrustEventType;
 use App\Exceptions\InvalidLoanTransition;
 use App\Models\Loan;
 use App\Models\User;
+use App\Notifications\LoanAcceptedNotification;
+use App\Notifications\LoanDueSoonNotification;
+use App\Notifications\LoanOverdueNotification;
 use App\Services\Trust\TrustService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -86,6 +89,8 @@ class LoanService
             $this->stateMachine->transition($locked, LoanStatus::Accepted);
             $locked->lender()->associate($lender);
             $locked->save();
+
+            $locked->borrower->notify(new LoanAcceptedNotification($locked));
 
             return $locked;
         });
@@ -182,6 +187,27 @@ class LoanService
         $loan->save();
 
         $this->trust->record($loan->borrower, TrustEventType::LoanOverdue, $loan, counterparty: $loan->lender);
+
+        $loan->borrower->notify(new LoanOverdueNotification($loan));
+    }
+
+    /**
+     * Scheduler step: remind the borrower a couple of days before the due date (once per loan).
+     */
+    public function remindDueSoon(Loan $loan): bool
+    {
+        $alreadyReminded = $loan->borrower->notifications()
+            ->where('type', 'loan_due_soon')
+            ->where('data->loan_id', $loan->id)
+            ->exists();
+
+        if ($alreadyReminded) {
+            return false;
+        }
+
+        $loan->borrower->notify(new LoanDueSoonNotification($loan));
+
+        return true;
     }
 
     /**

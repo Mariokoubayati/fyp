@@ -83,7 +83,7 @@ As a lending decision, adding the AI check to the rules cuts the money lent to s
 | Usability | System Usability Scale with 5 to 8 students doing set tasks (find a group, list an item, request a loan, send a message) | SUS score (0 to 100) and observed issues |
 | Load | Simple load test on feed, listings and recommendations | Response times under load |
 
-Today the backend has 249 automated tests, all passing on MySQL 8 and SQLite, and the ML service has 30.
+Today the backend has 272 automated tests, all passing on MySQL 8 and SQLite, and the ML service has 30.
 
 **Recommender results** (a campus the model never saw; full tables in `ml/reports/RECOMMENDER.md`). The chosen item is in the top 3:
 
@@ -130,9 +130,9 @@ Score = 500 + repayment + marketplace + vouches, limited to 0 to 1000. Each comp
 
 The full test suite now runs on MySQL 8 (strict mode) and SQLite in CI on every pull request, and fresh migrations and seeding run on MySQL. All tests pass on both. We found no MySQL-specific failures.
 
-### 8. Messaging
+### 8. Messaging: Done
 
-"Encrypted" now means two things only: message bodies are **encrypted at rest** in the database (Laravel encrypted cast, AES-256), and all traffic is **encrypted in transit** over HTTPS. We do not claim end-to-end encryption. Messages are delivered by polling.
+"Encrypted" now means two things only: message bodies are **encrypted at rest** in the database (Laravel encrypted cast, AES-256), and all traffic is **encrypted in transit** over HTTPS on the deployed server. We do not claim end-to-end encryption. The app checks for new messages every 4 seconds while a chat is open. Students can block each other (no messages either way) and report each other; reports from 3 different students stop an account from starting new chats until they are reviewed. A test checks that the database only holds ciphertext.
 
 ### 9. Security: Done
 
@@ -155,7 +155,7 @@ Confirmed: `@ua.edu.lb` covers students on both campuses (ZA and BA).
 | Priority | Items |
 |---|---|
 | **Must** | Verified identity, study groups with matching, marketplace, P2P lending, trust score with anti-collusion, AI trust model and its evaluation, recommender (groups and items) with precision@k, evaluation (tests, SUS) |
-| **Should** | Messaging (encrypted at rest + HTTPS), in-app notifications |
+| **Should** | Messaging (encrypted at rest + HTTPS), in-app notifications (both done) |
 | **Stretch** | Event and project hub with event recommendations, engagement analytics and badges, push notifications to the phone |
 
 ---
@@ -170,8 +170,8 @@ Current week: **Week 10 (Nov 9 to Nov 15)** ◀
 | 3–4 | Sep 21 to Oct 4 | Database design, Laravel and Expo setup, JWT auth | ✅ |
 | 5–8 | Oct 5 to Nov 1 | Identity, study groups, marketplace, lending, rule-based trust score, vouches and ratings | ✅ |
 | 9 | Nov 2 to Nov 8 | MySQL CI, anti-collusion rules, AI trust service and its evaluation | ✅ |
-| **10** ◀ | **Nov 9 to Nov 15** | **Recommender (groups, items) with its evaluation, home feed, demo data, this response, verified references** | 🟡 |
-| 11 | Nov 16 to Nov 22 | Messaging and in-app notifications | ⬜ |
+| **10** ◀ | **Nov 9 to Nov 15** | **Recommender (groups, items) with its evaluation, home feed, demo data, messaging and in-app notifications, this response, verified references** | 🟡 |
+| 11 | Nov 16 to Nov 22 | Device testing and fixes, proposal update | ⬜ |
 | 12 | Nov 23 to Nov 29 | Messaging polish, security pass; stretch: event hub | ⬜ |
 | 13 | Nov 30 to Dec 6 | Usability study (SUS); stretch: event hub | ⬜ |
 | 14 | Dec 7 to Dec 13 | Security pass, load test, feature freeze; stretch: analytics and badges | ⬜ |

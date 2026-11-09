@@ -31,6 +31,10 @@ class AppServiceProvider extends ServiceProvider
             ['id' => $notifiable->getKey(), 'hash' => sha1($notifiable->getEmailForVerification())],
         ));
 
+        RateLimiter::for('messages', function (Request $request): Limit {
+            return Limit::perMinute(config('messaging.messages_per_minute'))->by((string) $request->user()?->id);
+        });
+
         RateLimiter::for('login', function (Request $request): Limit {
             return Limit::perMinute(5)->by(
                 Str::transliterate(Str::lower($request->string('email')->toString()).'|'.$request->ip())

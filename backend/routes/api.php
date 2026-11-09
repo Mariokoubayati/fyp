@@ -1,5 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\V1\BadgeCountController;
+use App\Http\Controllers\Api\V1\BlockDestroyController;
+use App\Http\Controllers\Api\V1\BlockStoreController;
+use App\Http\Controllers\Api\V1\ConversationIndexController;
+use App\Http\Controllers\Api\V1\ConversationStoreController;
 use App\Http\Controllers\Api\V1\CourseIndexController;
 use App\Http\Controllers\Api\V1\CurrentUserController;
 use App\Http\Controllers\Api\V1\EnrollmentDestroyController;
@@ -21,7 +26,11 @@ use App\Http\Controllers\Api\V1\LoanShowController;
 use App\Http\Controllers\Api\V1\LoanStoreController;
 use App\Http\Controllers\Api\V1\LoginController;
 use App\Http\Controllers\Api\V1\LogoutController;
+use App\Http\Controllers\Api\V1\MessageIndexController;
+use App\Http\Controllers\Api\V1\MessageStoreController;
 use App\Http\Controllers\Api\V1\MyTrustController;
+use App\Http\Controllers\Api\V1\NotificationIndexController;
+use App\Http\Controllers\Api\V1\NotificationReadController;
 use App\Http\Controllers\Api\V1\RecommendationController;
 use App\Http\Controllers\Api\V1\RefreshTokenController;
 use App\Http\Controllers\Api\V1\RegisterController;
@@ -36,6 +45,7 @@ use App\Http\Controllers\Api\V1\StudyGroupShowController;
 use App\Http\Controllers\Api\V1\StudyGroupStoreController;
 use App\Http\Controllers\Api\V1\StudyGroupUpdateController;
 use App\Http\Controllers\Api\V1\UpdateProfileController;
+use App\Http\Controllers\Api\V1\UserReportStoreController;
 use App\Http\Controllers\Api\V1\UserSearchController;
 use App\Http\Controllers\Api\V1\UserTrustController;
 use App\Http\Controllers\Api\V1\VerifyEmailController;
@@ -78,6 +88,21 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::put('users/{user}/vouch', VouchStoreController::class)->middleware('verified')->name('users.vouch.store');
         Route::delete('users/{user}/vouch', VouchDestroyController::class)->name('users.vouch.destroy');
         Route::get('courses', CourseIndexController::class)->name('courses.index');
+
+        Route::put('users/{user}/block', BlockStoreController::class)->name('users.block.store');
+        Route::delete('users/{user}/block', BlockDestroyController::class)->name('users.block.destroy');
+        Route::post('users/{user}/report', UserReportStoreController::class)->middleware('throttle:10,1')->name('users.report.store');
+
+        Route::get('me/badges', BadgeCountController::class)->name('me.badges');
+        Route::get('notifications', NotificationIndexController::class)->name('notifications.index');
+        Route::post('notifications/read', NotificationReadController::class)->name('notifications.read');
+
+        Route::prefix('conversations')->name('conversations.')->group(function (): void {
+            Route::get('/', ConversationIndexController::class)->name('index');
+            Route::post('/', ConversationStoreController::class)->middleware('verified')->name('store');
+            Route::get('{conversation}/messages', MessageIndexController::class)->name('messages.index');
+            Route::post('{conversation}/messages', MessageStoreController::class)->middleware('throttle:messages')->name('messages.store');
+        });
 
         Route::prefix('loans')->name('loans.')->group(function (): void {
             Route::get('/', LoanIndexController::class)->name('index');

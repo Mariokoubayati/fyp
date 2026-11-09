@@ -48,6 +48,28 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
     }
 
     /**
+     * Students this student has blocked.
+     *
+     * @return HasMany<Block, $this>
+     */
+    public function blocks(): HasMany
+    {
+        return $this->hasMany(Block::class, 'blocker_id');
+    }
+
+    /**
+     * Unreviewed reports from this many different students stop this student from starting new chats.
+     */
+    public function isChatRestricted(): bool
+    {
+        return UserReport::query()
+            ->where('reported_id', $this->id)
+            ->whereNull('reviewed_at')
+            ->distinct()
+            ->count('reporter_id') >= config('messaging.reports_before_restriction');
+    }
+
+    /**
      * @return HasMany<TrustScoreLog, $this>
      */
     public function trustScoreLogs(): HasMany
