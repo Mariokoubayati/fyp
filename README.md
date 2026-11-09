@@ -11,14 +11,14 @@ Final Year Project, Antonine University (Faculty of Engineering and Technology).
 | Mobile app | React Native (Expo) |
 | Backend API | Laravel 13 (PHP 8.3), JWT auth (`php-open-source-saver/jwt-auth`) |
 | Database | MySQL |
-| AI trust model | Python + Flask + scikit-learn (`ml/`) |
+| AI (trust model, recommender) | Python + Flask + scikit-learn (`ml/`) |
 
 ## Repository layout
 
 ```
 backend/   Laravel REST API (/api/v1)
 mobile/    Expo / React Native app
-ml/        Python AI service: trust model, synthetic data, evaluation (see ml/README.md)
+ml/        Python AI service: trust model, recommender, synthetic data, evaluation (see ml/README.md)
 docs/      Build plan and supervisor responses
 ```
 
@@ -34,6 +34,13 @@ php artisan key:generate
 php artisan jwt:secret
 php artisan migrate
 php artisan serve             # http://127.0.0.1:8000
+```
+
+Demo data (40 students, study groups, listings, loans, vouches; every password is `password`, demo login `202300000@ua.edu.lb`):
+
+```sh
+php artisan migrate:fresh --seed
+php artisan db:seed --class=DemoSeeder
 ```
 
 Run the tests (uses in-memory SQLite, no MySQL needed):
@@ -72,7 +79,7 @@ Base path: `/api/v1`. Authenticated routes need `Authorization: Bearer <token>`.
 | PUT | `/me/courses/{course}` | yes | Enroll in a course (idempotent) |
 | DELETE | `/me/courses/{course}` | yes | Leave a course (idempotent) |
 | GET | `/study-groups` | yes | Upcoming groups (`?course_id=`, `?mine=1`, paginated) |
-| GET | `/study-groups/recommended` | yes | Open groups for your courses, ranked by classmates |
+| GET | `/study-groups/recommended` | yes | Open groups for you (recommender, or your courses by classmates as a fallback) |
 | POST | `/study-groups` | verified | Start a group (you must be enrolled in the course) |
 | GET | `/study-groups/{id}` | yes | One group |
 | PATCH | `/study-groups/{id}` | creator | Edit a group |
@@ -80,6 +87,7 @@ Base path: `/api/v1`. Authenticated routes need `Authorization: Bearer <token>`.
 | PUT | `/study-groups/{id}/membership` | verified | Join (409 when full or already started) |
 | DELETE | `/study-groups/{id}/membership` | yes | Leave (the creator cannot leave) |
 | GET | `/me/trust` | yes | Your score, tier, component breakdown, flags and history |
+| GET | `/recommendations` | yes | Home feed: 5 study groups and 5 listings picked for you, plus `source` (`model` or `rules`) |
 | GET | `/users/{id}/trust` | yes | Another student's `score`, `tier`, `max_loan` |
 | GET | `/users?search=` | yes | Find students by name (id, name, major only) |
 | GET | `/loans` | yes | Open requests from others; `?role=borrowed` or `?role=lent` for your own |

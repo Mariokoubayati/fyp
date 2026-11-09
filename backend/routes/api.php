@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\V1\LoanStoreController;
 use App\Http\Controllers\Api\V1\LoginController;
 use App\Http\Controllers\Api\V1\LogoutController;
 use App\Http\Controllers\Api\V1\MyTrustController;
+use App\Http\Controllers\Api\V1\RecommendationController;
 use App\Http\Controllers\Api\V1\RefreshTokenController;
 use App\Http\Controllers\Api\V1\RegisterController;
 use App\Http\Controllers\Api\V1\ResendVerificationController;
@@ -63,6 +64,8 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
     Route::middleware('auth:api')->group(function (): void {
         Route::get('me', CurrentUserController::class)->name('me');
         Route::patch('me', UpdateProfileController::class)->name('me.update');
+
+        Route::get('recommendations', RecommendationController::class)->name('recommendations');
 
         Route::get('me/courses', EnrollmentIndexController::class)->name('me.courses.index');
         Route::put('me/courses/{course}', EnrollmentStoreController::class)->name('me.courses.store');

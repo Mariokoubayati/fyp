@@ -2,7 +2,7 @@
 
 **To:** Dr. Ahmad Kassem
 **From:** Ahmad Shmoury (202312277), Mario Koubayati (202310441)
-**Date:** November 2026 (Week 9 of 16)
+**Date:** November 2026 (Week 10 of 16)
 
 Thank you for the feedback. Below is our answer to each point, followed by the items you asked for. Points marked **Done** are already in the repository with tests.
 
@@ -79,11 +79,20 @@ As a lending decision, adding the AI check to the rules cuts the money lent to s
 | Loan state machine | Automated feature tests on every transition and invalid transition | Test count and pass rate (CI on MySQL 8 and SQLite) |
 | Anti-collusion | Attack scenarios run through the API (point 1) | Score and tier before and after |
 | AI trust score | Held-out and shifted synthetic data (point 2) | AUC, Brier, reliability diagram, ring recall vs baseline |
-| Recommender | Hold out part of each student's interactions, recommend top 5 | precision@5 and recall@5 vs the current SQL ranking |
+| Recommender | Every real join or purchase after day 90 of a synthetic campus, ranked against everything open at that moment | Hit@k, MRR, precision@5 and recall@5 vs the current SQL ordering (results below) |
 | Usability | System Usability Scale with 5 to 8 students doing set tasks (find a group, list an item, request a loan, send a message) | SUS score (0 to 100) and observed issues |
 | Load | Simple load test on feed, listings and recommendations | Response times under load |
 
-Today the backend has 243 automated tests, all passing on MySQL 8 and SQLite, and the ML service has 21.
+Today the backend has 249 automated tests, all passing on MySQL 8 and SQLite, and the ML service has 30.
+
+**Recommender results** (a campus the model never saw; full tables in `ml/reports/RECOMMENDER.md`). The chosen item is in the top 3:
+
+| | Today's ordering | Stronger baseline | Recommender |
+|---|---|---|---|
+| Study groups (about 14 open each time) | 84.0% (my courses, most classmates) | n/a | **88.6%** |
+| Listings (about 27 available each time) | 14.2% (newest first) | 49.4% (my courses first, then newest) | **54.6%** |
+
+The gain on groups is modest because the current rule (my courses, most classmates) is already good. On listings, the recommender roughly quadruples what the current "newest first" feed achieves, and still beats a smarter rule.
 
 ---
 
@@ -91,11 +100,11 @@ Today the backend has 243 automated tests, all passing on MySQL 8 and SQLite, an
 
 ### 4. Scope
 
-Agreed. The AI trust service and its evaluation are already done (Week 9, point 2). The recommender and its precision@k evaluation come next (Weeks 10 and 11). Events, analytics and badges are now stretch goals and come after the core features. Messaging and notifications stay in core because they are part of the proposal's objectives.
+Agreed. The AI trust service and its evaluation are done (Week 9, point 2), and so is the recommender with its precision@k evaluation (Week 10, point 3). Events, analytics and badges are now stretch goals and come after the core features. Messaging and notifications stay in core because they are part of the proposal's objectives.
 
 ### 5. Timeline
 
-We are in **Week 9 of 16** (Week 1 started Monday, September 7). See the Gantt chart below.
+We are in **Week 10 of 16** (Week 1 started Monday, September 7). See the Gantt chart below.
 
 ### 6. Trust formula
 
@@ -153,17 +162,17 @@ Confirmed: `@ua.edu.lb` covers students on both campuses (ZA and BA).
 
 ## Revised Gantt chart
 
-Current week: **Week 9 (Nov 2 to Nov 8)** ◀
+Current week: **Week 10 (Nov 9 to Nov 15)** ◀
 
 | Week | Dates | Work | Status |
 |---|---|---|---|
 | 1–2 | Sep 7 to Sep 20 | Requirements, mockups, trust score design | ✅ |
 | 3–4 | Sep 21 to Oct 4 | Database design, Laravel and Expo setup, JWT auth | ✅ |
 | 5–8 | Oct 5 to Nov 1 | Identity, study groups, marketplace, lending, rule-based trust score, vouches and ratings | ✅ |
-| **9** ◀ | **Nov 2 to Nov 8** | **MySQL CI, anti-collusion rules, this response, AI trust service and its evaluation** | ✅ |
-| 10 | Nov 9 to Nov 15 | Verified references, start of the recommender | ⬜ |
-| 11 | Nov 16 to Nov 22 | Recommender (groups, items) and precision@k | ⬜ |
-| 12 | Nov 23 to Nov 29 | Messaging and in-app notifications | ⬜ |
+| 9 | Nov 2 to Nov 8 | MySQL CI, anti-collusion rules, AI trust service and its evaluation | ✅ |
+| **10** ◀ | **Nov 9 to Nov 15** | **Recommender (groups, items) with its evaluation, home feed, demo data, this response, verified references** | 🟡 |
+| 11 | Nov 16 to Nov 22 | Messaging and in-app notifications | ⬜ |
+| 12 | Nov 23 to Nov 29 | Messaging polish, security pass; stretch: event hub | ⬜ |
 | 13 | Nov 30 to Dec 6 | Usability study (SUS); stretch: event hub | ⬜ |
 | 14 | Dec 7 to Dec 13 | Security pass, load test, feature freeze; stretch: analytics and badges | ⬜ |
 | 15 | Dec 14 to Dec 20 | Final report | ⬜ |
