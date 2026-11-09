@@ -58,6 +58,15 @@ DB_CONNECTION=mysql DB_DATABASE=unicircle_test DB_USERNAME=root DB_PASSWORD= \
   php -d variables_order=EGPCS vendor/bin/phpunit
 ```
 
+Check the whole running app end to end (start `php artisan serve` and seed `DemoSeeder` first; prints PASS/FAIL per check):
+
+```sh
+cd backend
+php artisan app:e2e            # or --base=https://your-domain/api/v1
+```
+
+Test accounts from `DemoSeeder` (password `password`): `202300000@ua.edu.lb` (Test User), `202300001` and `202300002` (same courses, for two-student flows), `202300009` (unverified). The mobile app also runs in a browser (`npx expo start`, then `w`) so a second student can be played without a second phone. The full manual checklist is `docs/TEST-PLAN.md`.
+
 CI (`.github/workflows/ci.yml`) runs the backend suite on MySQL 8 and SQLite, the mobile typecheck and lint, and the ML tests, on every pull request.
 
 ## API (v1)
