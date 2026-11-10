@@ -15,6 +15,7 @@ use App\Models\Loan;
 use App\Models\StudyGroup;
 use App\Models\User;
 use App\Models\Vouch;
+use App\Notifications\NewMessageNotification;
 use App\Services\Trust\TrustService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
@@ -24,7 +25,13 @@ use Illuminate\Support\Collection;
  *
  *     php artisan migrate:fresh --seed && php artisan db:seed --class=DemoSeeder
  *
- * Every student's password is "password". The demo login is 202300000@ua.edu.lb.
+ * Every student's password is "password". Fixed test accounts (used by the test plan and
+ * `php artisan app:e2e`):
+ *
+ *   202300000@ua.edu.lb  Test User        verified, main tester
+ *   202300001@ua.edu.lb  Test User Two    verified, same courses (the "other student")
+ *   202300002@ua.edu.lb  Test User Three  verified, same courses (an outsider for permission checks)
+ *   202300009@ua.edu.lb  Unverified User  email not verified
  */
 class DemoSeeder extends Seeder
 {
@@ -47,6 +54,19 @@ class DemoSeeder extends Seeder
         'other' => ['Desk lamp', 'Backpack', 'Bike lock', 'Mini fridge'],
     ];
 
+    /**
+     * Realistic student prices in dollars, by category.
+     *
+     * @var array<string, array{int, int}>
+     */
+    private const PRICE_RANGES = [
+        'books' => [8, 35],
+        'notes' => [3, 10],
+        'electronics' => [10, 60],
+        'supplies' => [3, 20],
+        'other' => [5, 40],
+    ];
+
     private const LOCATIONS = ['Library, 2nd floor', 'Cafeteria', 'Room B204', 'Study hall', 'Online (Teams)'];
 
     public function run(TrustService $trust): void
@@ -59,6 +79,10 @@ class DemoSeeder extends Seeder
         $demo->forceFill(['major' => 'Computer Science', 'study_year' => 3, 'created_at' => now()->subMonths(3)])->save();
         $demo->courses()->syncWithoutDetaching($courses->whereIn('code', ['CSC-301', 'CSC-302', 'CSC-303', 'STA-201'])->modelKeys());
 
+        $this->testAccount('202300001@ua.edu.lb', 'Test User Two', $demo->courses->modelKeys());
+        $this->testAccount('202300002@ua.edu.lb', 'Test User Three', $demo->courses->modelKeys());
+        $this->testAccount('202300009@ua.edu.lb', 'Unverified User', [], verified: false);
+
         $students = $this->students($courses)->push($demo);
 
         $this->pastGroups($students, $courses);
@@ -69,6 +93,26 @@ class DemoSeeder extends Seeder
         $this->conversations($demo, $students->reject(fn (User $s): bool => $s->is($demo)));
 
         $students->each(fn (User $student) => $trust->refresh($student));
+    }
+
+    /**
+     * A fixed account with a known email, so testers always know who to sign in as.
+     *
+     * @param  list<int>  $courseIds
+     */
+    private function testAccount(string $email, string $name, array $courseIds, bool $verified = true): User
+    {
+        $user = User::firstWhere('email', $email) ?? User::factory()->create(['email' => $email]);
+        $user->forceFill([
+            'name' => $name,
+            'major' => 'Computer Science',
+            'study_year' => 3,
+            'created_at' => now()->subMonths(3),
+            'email_verified_at' => $verified ? now()->subMonths(3) : null,
+        ])->save();
+        $user->courses()->syncWithoutDetaching($courseIds);
+
+        return $user;
     }
 
     /**
@@ -186,7 +230,7 @@ class DemoSeeder extends Seeder
             'title' => $title,
             'category' => ListingCategory::from($category),
             'condition' => fake()->randomElement(ListingCondition::cases()),
-            'price' => fake()->numberBetween($category === 'notes' ? 3 : 8, $category === 'electronics' ? 60 : 35),
+            'price' => fake()->numberBetween(...self::PRICE_RANGES[$category]),
             'created_at' => now()->subDays(fake()->numberBetween(0, 20)),
         ]);
     }
@@ -254,6 +298,11 @@ class DemoSeeder extends Seeder
             }
 
             $conversation->forceFill(['last_message_at' => $sentAt])->save();
+
+            // The chat with unread messages also shows up under the bell.
+            if ($i === 0) {
+                $demo->notify(new NewMessageNotification($conversation->messages()->where('sender_id', $other->id)->latest('id')->first()));
+            }
         }
     }
 

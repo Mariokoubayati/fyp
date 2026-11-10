@@ -4,20 +4,25 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\AuthTokenResource;
-use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
 
 class RefreshTokenController extends Controller
 {
     /**
-     * Swap the current token for a fresh one and invalidate the old one.
+     * Swap a valid or recently expired token for a new one. The old token stops working.
      */
-    public function __invoke(Request $request): AuthTokenResource
+    public function __invoke(): AuthTokenResource|JsonResponse
     {
-        $user = $request->user();
+        $guard = Auth::guard('api');
 
-        $token = Auth::guard('api')->refresh();
+        try {
+            $token = $guard->refresh();
+        } catch (JWTException) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
 
-        return new AuthTokenResource(['token' => $token, 'user' => $user]);
+        return new AuthTokenResource(['token' => $token, 'user' => $guard->setToken($token)->user()]);
     }
 }
