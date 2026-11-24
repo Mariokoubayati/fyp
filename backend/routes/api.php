@@ -62,9 +62,12 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             ->middleware(['signed', 'throttle:6,1'])
             ->name('verification.verify');
 
+        // Outside the auth middleware on purpose: an expired token must still be refreshable
+        // within the refresh window, and the auth middleware would reject it first.
+        Route::post('refresh', RefreshTokenController::class)->middleware('throttle:30,1')->name('refresh');
+
         Route::middleware('auth:api')->group(function (): void {
             Route::post('logout', LogoutController::class)->name('logout');
-            Route::post('refresh', RefreshTokenController::class)->name('refresh');
             Route::post('email/resend', ResendVerificationController::class)
                 ->middleware('throttle:6,1')
                 ->name('verification.resend');

@@ -13,6 +13,11 @@ export function getErrorMessage(error: unknown): string {
       return 'Too many attempts. Please wait a minute and try again.';
     }
 
+    // Never show server internals (stack traces, SQL) to students.
+    if (error.response.status >= 500) {
+      return 'Something went wrong on our side. Please try again in a moment.';
+    }
+
     return error.response.data?.message ?? 'Something went wrong. Please try again.';
   }
 

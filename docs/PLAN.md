@@ -22,7 +22,8 @@ Status legend: ✅ done · 🟡 in progress · ⬜ not started · 🔵 stretch
 | Rule-based trust score (events, tiers, nightly recalc, history) | ✅ | Anti-collusion added (PR #2) |
 | Vouches + public student profile | ✅ | |
 | Mobile app, 5 tabs (Expo Router) | ✅ | |
-| Backend tests | ✅ | 272 passing on MySQL 8 and SQLite + 30 ML tests, CI on every PR |
+| Backend tests | ✅ | 277 passing on MySQL 8 and SQLite + 30 ML tests, CI on every PR |
+| Test plan + end-to-end script | ✅ | PR #6: `docs/TEST-PLAN.md` (iPhone + Android checklist), `php artisan app:e2e` (98 checks), browser build for the second account; 3 real bugs fixed |
 | Messaging + notifications | ✅ | PR #5: chats, block/report, notifications list, header badges |
 | Home feed + recommender | ✅ | PR #4: groups and listings picked for you |
 | Demo data | ✅ | PR #4: `DemoSeeder` (40 students, groups, listings, loans) for demos and the SUS study |
@@ -76,11 +77,12 @@ In the supervisor response, events, analytics and badges are labeled stretch (hi
 | 2026-11-06 | AI model gates the tier (block a size when risk ≥ 30%), never raises it; displayed score stays rule-based |
 | 2026-11-06 | Laravel sends raw history, Python computes features (one implementation) |
 | 2026-11-09 | Recommender uses the same pattern; SQL ordering stays as fallback and as the evaluation baseline |
+| 2026-11-09 | Testing in three layers: CI, `app:e2e` against the running server, manual checklist on both phones; never run with `CACHE_STORE=array` |
 | 2026-11-09 | Any verified student can message any other; block stops both ways; 3 unreviewed reports from different students stop new chats |
 
 ## 5. What Mario owns
 
-- Test every new screen on a real phone
+- Run `docs/TEST-PLAN.md` on iPhone and Android (about 3 hours each) and log bugs as GitHub issues
 - Run the SUS study with 5 to 8 students (Week 13)
 - Merge the PRs
 - Get the defense date

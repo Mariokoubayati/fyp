@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import {
-  Alert,
   FlatList,
   KeyboardAvoidingView,
   Modal,
@@ -40,7 +39,9 @@ export default function Chat() {
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [reporting, setReporting] = useState(false);
+  /** Which bottom sheet is open: the options menu, the report reasons, or the block confirmation. */
+  const [sheet, setSheet] = useState<'menu' | 'report' | 'block' | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const listRef = useRef<FlatList<ChatMessage>>(null);
   const lastId = useRef<number | undefined>(undefined);
 
@@ -99,32 +100,21 @@ export default function Chat() {
     }
   }
 
+  // In-app sheets instead of Alert, so the menu also works in the browser build.
   function report(reason: ReportReason) {
-    setReporting(false);
+    setSheet(null);
     if (!otherId) return;
     reportStudent(otherId, reason, conversationId)
-      .then(() => Alert.alert('Report sent', 'Thank you. We will review it.'))
-      .catch((e) => Alert.alert('Could not send the report', getErrorMessage(e)));
+      .then(() => setNotice('Report sent. Thank you, we will review it.'))
+      .catch((e) => setError(getErrorMessage(e)));
   }
 
   function block() {
+    setSheet(null);
     if (!otherId) return;
-    Alert.alert(`Block ${params.name ?? 'this student'}?`, 'Neither of you will be able to send messages.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Block',
-        style: 'destructive',
-        onPress: () => blockStudent(otherId).catch((e) => Alert.alert('Could not block', getErrorMessage(e))),
-      },
-    ]);
-  }
-
-  function openMenu() {
-    Alert.alert(params.name ?? 'Chat', undefined, [
-      { text: 'Report', onPress: () => setReporting(true) },
-      { text: 'Block', style: 'destructive', onPress: block },
-      { text: 'Cancel', style: 'cancel' },
-    ]);
+    blockStudent(otherId)
+      .then(() => setNotice(`You blocked ${params.name ?? 'this student'}. Neither of you can send messages now.`))
+      .catch((e) => setError(getErrorMessage(e)));
   }
 
   return (
@@ -134,7 +124,7 @@ export default function Chat() {
           title: params.name ?? 'Chat',
           headerRight: () =>
             otherId ? (
-              <Pressable accessibilityLabel="Chat options" hitSlop={8} onPress={openMenu}>
+              <Pressable accessibilityLabel="Chat options" hitSlop={8} onPress={() => setSheet('menu')}>
                 <Ionicons name="ellipsis-horizontal" size={22} color={colors.text} />
               </Pressable>
             ) : null,
@@ -163,6 +153,7 @@ export default function Chat() {
           />
         )}
         {error ? <Text style={styles.error}>{error}</Text> : null}
+        {notice ? <Text style={styles.notice}>{notice}</Text> : null}
         <View style={styles.composer}>
           <TextInput
             style={styles.input}
@@ -183,16 +174,40 @@ export default function Chat() {
         </View>
       </KeyboardAvoidingView>
 
-      <Modal visible={reporting} transparent animationType="fade" onRequestClose={() => setReporting(false)}>
-        <Pressable style={styles.backdrop} onPress={() => setReporting(false)}>
+      <Modal visible={sheet !== null} transparent animationType="fade" onRequestClose={() => setSheet(null)}>
+        <Pressable style={styles.backdrop} onPress={() => setSheet(null)}>
           <View style={styles.sheet}>
-            <Text style={typography.heading}>Why are you reporting?</Text>
-            {REPORT_REASONS.map((r) => (
-              <Pressable key={r.value} style={styles.option} onPress={() => report(r.value)}>
-                <Text style={typography.body}>{r.label}</Text>
-              </Pressable>
-            ))}
-            <Pressable style={styles.option} onPress={() => setReporting(false)}>
+            {sheet === 'menu' ? (
+              <>
+                <Text style={typography.heading}>{params.name ?? 'Chat'}</Text>
+                <Pressable style={styles.option} onPress={() => setSheet('report')}>
+                  <Text style={typography.body}>Report</Text>
+                </Pressable>
+                <Pressable style={styles.option} onPress={() => setSheet('block')}>
+                  <Text style={[typography.body, styles.danger]}>Block</Text>
+                </Pressable>
+              </>
+            ) : null}
+            {sheet === 'report' ? (
+              <>
+                <Text style={typography.heading}>Why are you reporting?</Text>
+                {REPORT_REASONS.map((r) => (
+                  <Pressable key={r.value} style={styles.option} onPress={() => report(r.value)}>
+                    <Text style={typography.body}>{r.label}</Text>
+                  </Pressable>
+                ))}
+              </>
+            ) : null}
+            {sheet === 'block' ? (
+              <>
+                <Text style={typography.heading}>Block {params.name ?? 'this student'}?</Text>
+                <Text style={typography.caption}>Neither of you will be able to send messages. You can unblock later.</Text>
+                <Pressable style={styles.option} onPress={block}>
+                  <Text style={[typography.body, styles.danger]}>Block</Text>
+                </Pressable>
+              </>
+            ) : null}
+            <Pressable style={styles.option} onPress={() => setSheet(null)}>
               <Text style={[typography.body, styles.cancel]}>Cancel</Text>
             </Pressable>
           </View>
@@ -239,4 +254,6 @@ const styles = StyleSheet.create({
   sheet: { backgroundColor: colors.surface, padding: spacing.md, gap: spacing.xs, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg },
   option: { paddingVertical: spacing.md, borderTopWidth: 1, borderTopColor: colors.border },
   cancel: { color: colors.textMuted, textAlign: 'center' },
+  danger: { color: colors.danger },
+  notice: { ...typography.caption, color: colors.success, paddingHorizontal: spacing.md },
 });
