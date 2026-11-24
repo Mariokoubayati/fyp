@@ -3,7 +3,9 @@
 namespace Tests\Feature\Http\Controllers\Api\V1;
 
 use App\Models\Course;
+use App\Models\Event;
 use App\Models\Listing;
+use App\Models\Project;
 use App\Models\StudyGroup;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -80,6 +82,44 @@ class RecommendationControllerTest extends TestCase
             ->assertJsonPath('data.listings.1.id', $other->id);
 
         Http::assertNothingSent();
+    }
+
+    public function test_the_feed_includes_events_and_projects(): void
+    {
+        $event = Event::factory()->create();
+        $project = Project::factory()->create();
+
+        $this->feed()
+            ->assertOk()
+            ->assertJsonPath('data.events.0.id', $event->id)
+            ->assertJsonPath('data.projects.0.id', $project->id)
+            ->assertJsonPath('data.source', 'rules');
+    }
+
+    public function test_the_model_ranks_events_and_projects_and_gets_the_profile(): void
+    {
+        $this->enableModel();
+        $this->fakeRanking(fn (array $ids): array => array_reverse($ids));
+        $this->student->update(['interests' => ['tech'], 'skills' => ['Laravel']]);
+        $first = Event::factory()->create(['starts_at' => now()->addDay()]);
+        $second = Event::factory()->create(['starts_at' => now()->addDays(2)]);
+        $older = Project::factory()->create(['created_at' => now()->subDay()]);
+        $newer = Project::factory()->create();
+
+        $this->feed()
+            ->assertOk()
+            ->assertJsonPath('data.events.0.id', $second->id)
+            ->assertJsonPath('data.events.1.id', $first->id)
+            ->assertJsonPath('data.projects.0.id', $older->id)
+            ->assertJsonPath('data.projects.1.id', $newer->id)
+            ->assertJsonPath('data.source', 'model');
+
+        Http::assertSent(fn (Request $request): bool => str_ends_with($request->url(), '/recommend/events')
+            && $request['user']['interests'] === ['tech']
+            && $request['candidates'][0]['attendees'][0]['id'] === $first->creator_id);
+        Http::assertSent(fn (Request $request): bool => str_ends_with($request->url(), '/recommend/projects')
+            && $request['user']['skills'] === ['Laravel']
+            && $request['candidates'][0]['member_ids'] === [$newer->owner_id]);
     }
 
     public function test_the_model_order_is_used_and_can_surface_a_group_outside_my_courses(): void

@@ -1,13 +1,13 @@
 # UniCircle: Full Test Plan
 
-**Version:** 2026-11-24 · **Covers:** PRs #1 to #6 plus the fixes from the full test pass of 2026-11-24
+**Version:** 2026-11-24 · **Covers:** PRs #1 to #8: everything built so far, including the event and project hub
 
 No test plan can prove software is 100% correct. This one makes sure that **every feature, every rule and every error case has been checked at least once, with evidence**, in three layers:
 
 | Layer | What it checks | How long | Who | When |
 |---|---|---|---|---|
-| **1. Automated tests** | Every API rule, permission and calculation (288 backend tests, 30 ML tests, app type-check and lint) | runs by itself | GitHub CI | Every pull request |
-| **2. End-to-end script** | All main flows over HTTP against your running server (101 checks) | ~1 minute | You, one command | After setup, after every merge, before a demo |
+| **1. Automated tests** | Every API rule, permission and calculation (341 backend tests, 38 ML tests, app type-check and lint) | runs by itself | GitHub CI | Every pull request |
+| **2. End-to-end script** | All main flows over HTTP against your running server (127 checks) | ~1 minute | You, one command | After setup, after every merge, before a demo |
 | **3. Manual phone checklist** | What only a person can see: screens, taps, keyboard, two phones talking, offline | ~3 hours per platform | You | Once on iPhone, once on Android, then the "smoke" subset after changes |
 
 If layer 1 or 2 fails, fix that first. There is no point testing screens on a broken server.
@@ -74,7 +74,7 @@ In `backend/.env`: `TRUST_MODEL_ENABLED=true` and `RECOMMENDER_ENABLED=true`, th
 | **C** | `202300002@ua.edu.lb` | An outsider, for "should not be allowed" cases (Test User Three) |
 | **U** | `202300009@ua.edu.lb` | Unverified student |
 
-A, B and C share the same courses. 40 other demo students exist with random names.
+A, B and C share the same courses. 40 other demo students exist with random names. Interests and skills: A = Tech, Career / Laravel, SQL; B = Tech, Sports / Python, UI design; C = Arts, Social / Photography. The demo data also has 16 upcoming events (3 past) and 8 projects, the same on every reset.
 
 ### 0.6 Reset to a clean state
 
@@ -89,8 +89,8 @@ php artisan migrate:fresh --seed && php artisan db:seed --class=DemoSeeder
 ## 1. Layer 1: automated tests
 
 ```sh
-cd backend && php artisan test          # 288 tests
-cd ml && python -m pytest -q            # 30 tests
+cd backend && php artisan test          # 341 tests
+cd ml && python -m pytest -q            # 38 tests
 cd mobile && npm run typecheck && npx eslint .
 ```
 
@@ -101,14 +101,16 @@ On GitHub, every pull request runs all of this, with the backend tests on **both
 | Area | Test files (tests) |
 |---|---|
 | Sign-up, login, tokens, email verification | Register (10), Login (5), Logout (2), Refresh (5), VerifyEmail (5), ResendVerification (3), Unauthenticated API (2) |
-| Profile, courses, search | CurrentUser (3), UpdateProfile (5), Course index (3), Enrollment (10), UserSearch (4), StudentProfile (3) |
+| Profile, courses, search | CurrentUser (3), UpdateProfile (8: incl. interests and skills), Course index (3), Enrollment (10), UserSearch (4), StudentProfile (3) |
 | Study groups | Store (5), Index (5), Show (3), Update (4), Destroy (3), Join (7), Leave (4), Recommended (4) |
 | Marketplace | Store (5), Index (6), Show (4), Update (6), Destroy (3), MarkSold (7), Rating (7) |
 | Lending | Store (10), Index (4), Show (4), Accept (5), ConfirmHandover (5), ConfirmRepayment (7), Cancel (5), State machine (2), Due loans job (5) |
 | Trust score | Calculator (19), Service (4), Collusion attacks through the API (5), AI gate (8), MyTrust (2), UserTrust (3), Vouch (10), Recalculate (1), Verified listener (1) |
-| Recommender + home feed | RecommendationController (7) |
+| Events | Store (5), Index (4), Show (2), Update (4), Destroy (2), RSVP (5), Cancel RSVP (2), Recommended (2), Reminder command (1) |
+| Projects | Store (3), Index (2), Show (1), Update (3), Destroy (1), Join request (3), Leave or withdraw (3), Accept or decline (3), Recommended (2) |
+| Recommender + home feed | RecommendationController (9) |
 | Messaging + notifications | Messaging (24), Review reports command (3), Loan notifications (3) |
-| ML service | Features and rules parity (11), simulator (5), Flask API (5), recommender (9) |
+| ML service | Features and rules parity (11), simulator (5), Flask API (5), recommender (17: groups, listings, events, projects) |
 
 ---
 
@@ -121,7 +123,7 @@ cd backend
 php artisan app:e2e
 ```
 
-It signs in as A, B, C and U and runs 101 checks over HTTP: access and permissions, profile and courses, the whole study group flow, the whole marketplace flow, a full loan from request to repayment, trust and vouches, messaging with block and report, notifications, the home feed, token refresh and sign-out. It prints PASS/FAIL per check and ends with `All 101 checks passed.`
+It signs in as A, B, C and U and runs 127 checks over HTTP: access and permissions, profile, interests and courses, the whole study group flow, events (post, topic filter, RSVP, full, cancel), projects (post, request, accept, full team, notification), the whole marketplace flow, a full loan from request to repayment, trust and vouches, messaging with block and report, notifications, the home feed, token refresh and sign-out. It prints PASS/FAIL per check and ends with `All 127 checks passed.`
 
 Against a deployed server: `php artisan app:e2e --base=https://your-domain/api/v1`.
 
@@ -163,24 +165,29 @@ It creates test data (groups, listings, a loan, messages). Reset (0.6) before a 
 | PROF-04 | My courses → search "data" | Matching courses appear | ☐ | ☐ |
 | PROF-05 | Add a course, then remove it | List updates each time; Home feed changes after adding | ☐ | ☐ |
 | PROF-06 | Search a nonsense word | "No courses found" | ☐ | ☐ |
+| PROF-07 | Edit profile → tap interests Arts and Sports, skills "Figma, Python" → Save | Back on Profile, the interests and skills show as small pills; Home suggestions change | ☐ | ☐ |
+| PROF-08 | Skills "a" (one letter) or 11 skills | Refused with a message under the skills field | ☐ | ☐ |
+| PROF-09 | As B, open A's public profile | A's interests and skills are shown (no email) | ☐ | ☐ |
 
 ### 3.3 Home feed (HOME)
 
 | ID | Steps | Expected | iOS | Android |
 |---|---|---|---|---|
-| HOME-01 🔥 | As A, open Home | "Study groups for you" and "For your courses" sections with cards; chat and bell icons top right | ☐ | ☐ |
+| HOME-01 🔥 | As A, open Home | "Study groups for you", "For your courses", "Events for you" and "Projects looking for you" sections with cards; chat and bell icons top right | ☐ | ☐ |
 | HOME-02 | Check the listings shown | None of them are A's own listings; mostly A's courses | ☐ | ☐ |
 | HOME-03 | Tap a group card, then back; tap a listing card, then back | Opens the right detail screen each time | ☐ | ☐ |
-| HOME-04 | Tap "See all" on each section | Opens Study Groups / Marketplace tab | ☐ | ☐ |
+| HOME-04 | Tap "See all" on each section | Opens Campus on Study groups / Events / Projects, or the Marketplace tab | ☐ | ☐ |
 | HOME-05 | Sign in with a brand-new account that has no courses | "Nothing to suggest yet" + "Add my courses" button that opens My courses | ☐ | ☐ |
-| HOME-06 | With the AI service running (0.4) | Greeting says "Picked for you from your courses and the people you study with." | ☐ | ☐ |
-| HOME-07 | Stop the AI service, pull Home again | Still works; greeting says "Study groups and items for your courses." | ☐ | ☐ |
+| HOME-06 | With the AI service running (0.4) | Greeting says "Picked for you from your courses, interests and the people you study with."; A's events are mostly Tech and Career, A's projects need Laravel | ☐ | ☐ |
+| HOME-07 | Stop the AI service, pull Home again | Still works; greeting says "Study groups, items, events and projects for your courses and interests." | ☐ | ☐ |
 
-### 3.4 Study groups (GRP)
+### 3.4 Campus tab: study groups (GRP)
+
+The tab is now called **Campus**, with a switcher at the top: Study groups / Events / Projects.
 
 | ID | Steps | Expected | iOS | Android |
 |---|---|---|---|---|
-| GRP-01 | Study Groups tab → For you / All / Mine | Each filter loads; Mine shows only groups A belongs to | ☐ | ☐ |
+| GRP-01 | Campus tab → Study groups → For you / All / Mine | Each filter loads; Mine shows only groups A belongs to | ☐ | ☐ |
 | GRP-02 🔥 | Start a study group: A's course, tomorrow, capacity 2, location | Created; appears under Mine with "1/2 students" | ☐ | ☐ |
 | GRP-03 | Create with an empty title | Refused | ☐ | ☐ |
 | GRP-04 | Create with capacity 1 or 31 | Refused (2 to 30) | ☐ | ☐ |
@@ -193,7 +200,39 @@ It creates test data (groups, listings, a loan, messages). Reset (0.6) before a 
 | GRP-11 | As A → Cancel this group | Group disappears from all lists | ☐ | ☐ |
 | GRP-12 | Groups that already started | Never shown in For you or All | ☐ | ☐ |
 
-### 3.5 Marketplace (MKT)
+### 3.5 Campus tab: events (EVT)
+
+| ID | Steps | Expected | iOS | Android |
+|---|---|---|---|---|
+| EVT-01 🔥 | Campus → Events → For you / All / Going / Mine | Each filter loads; For you puts A's Tech and Career events first | ☐ | ☐ |
+| EVT-02 | Tap the topic chips (Sports, then All topics) | Only Sports events, then everything again | ☐ | ☐ |
+| EVT-03 🔥 | Post an event: title, where, tomorrow 6 PM, topic Tech, max people 2 | Opens the event: "1/2 going", "Cancel this event" | ☐ | ☐ |
+| EVT-04 | Post with no topic, an empty place, or more than 3 topics | Refused (the picker stops at 3) | ☐ | ☐ |
+| EVT-05 🔥 | As B, open the event → "I'm going" | "2/2 going · Full", note "We will remind you the day before" | ☐ | ☐ |
+| EVT-06 | As C, open the full event | Button "Event is full", disabled | ☐ | ☐ |
+| EVT-07 | As B → "I can't go anymore" | Back to 1/2 going | ☐ | ☐ |
+| EVT-08 | As C, check there is no cancel option on A's event | Only "I'm going" | ☐ | ☐ |
+| EVT-09 | Reminder: with B going to an event tomorrow, run `php artisan events:remind` twice | B gets exactly one "… is coming up" notification; tapping it opens the event | ☐ | ☐ |
+| EVT-10 | As A → Cancel this event | Gone from every list; B gets "… was cancelled" | ☐ | ☐ |
+| EVT-11 | Events that already started | Never in For you or All; opening one shows "This event has started" | ☐ | ☐ |
+
+### 3.6 Campus tab: projects (PRJ)
+
+| ID | Steps | Expected | iOS | Android |
+|---|---|---|---|---|
+| PRJ-01 🔥 | Campus → Projects → For you / All / Joined / Mine | Each filter loads; For you puts projects needing A's skills (Laravel) first | ☐ | ☐ |
+| PRJ-02 🔥 | As B, post a project: name, description, skills "Laravel, UI design", topic Tech, team size 3 | Opens it: "1/3 on the team", "Requests to join", "Stop looking for members" | ☐ | ☐ |
+| PRJ-03 | Post with no skills, no topic, or team size 11 | Refused | ☐ | ☐ |
+| PRJ-04 🔥 | As A, open it → write a message → Ask to join | "Request sent…" and "Withdraw my request"; B gets "Test User wants to join …" | ☐ | ☐ |
+| PRJ-05 | As B, open the project | A's request with A's skills and message, Accept / Decline | ☐ | ☐ |
+| PRJ-06 🔥 | As B → Accept | "2/3 on the team"; A gets "You are on the team for …"; tapping it opens the project with "Leave the team" | ☐ | ☐ |
+| PRJ-07 | As C, ask to join, then B declines | C sees "The owner declined your request." and cannot ask again | ☐ | ☐ |
+| PRJ-08 | Fill the team (team size reached) | Others see "Team is full", disabled | ☐ | ☐ |
+| PRJ-09 | As B → Stop looking for members | Project leaves All and For you; "Look for members again" reopens it | ☐ | ☐ |
+| PRJ-10 | As A → Leave the team | A is off the team, count goes down | ☐ | ☐ |
+| PRJ-11 | As C, check there are no owner buttons on B's project and no requests list | Only Ask to join | ☐ | ☐ |
+
+### 3.7 Marketplace (MKT)
 
 | ID | Steps | Expected | iOS | Android |
 |---|---|---|---|---|
@@ -209,7 +248,7 @@ It creates test data (groups, listings, a loan, messages). Reset (0.6) before a 
 | MKT-10 | As C, open the sold listing | No rating option | ☐ | ☐ |
 | MKT-11 | As A, post another listing → Delete listing | Gone from My listings and Browse | ☐ | ☐ |
 
-### 3.6 Lending (LOAN)
+### 3.8 Lending (LOAN)
 
 Tier limits: Restricted $0, Basic $20, Trusted $100. A starts at Basic.
 
@@ -251,7 +290,7 @@ php artisan tinker --execute 'App\Models\Loan::find(ID)->forceFill(["due_date" =
 php artisan loans:process-due
 ```
 
-### 3.7 Trust score and anti-collusion (TRUST)
+### 3.9 Trust score and anti-collusion (TRUST)
 
 | ID | Steps | Expected | iOS | Android |
 |---|---|---|---|---|
@@ -271,7 +310,7 @@ php artisan loans:process-due
 php artisan tinker --execute 'App\Models\Loan::find(ID)->forceFill(["activated_at" => now()->subDays(3)])->save();'
 ```
 
-### 3.8 Messaging (MSG)
+### 3.10 Messaging (MSG)
 
 Use two devices: A on the phone, B on the second phone or the browser.
 
@@ -307,7 +346,7 @@ php artisan reports:review
 php artisan reports:review X_EMAIL
 ```
 
-### 3.9 Notifications (NOTIF)
+### 3.11 Notifications (NOTIF)
 
 | ID | Steps | Expected | iOS | Android |
 |---|---|---|---|---|
@@ -318,7 +357,7 @@ php artisan reports:review X_EMAIL
 | NOTIF-05 | Open the bell, go back to Home | Bell badge cleared | ☐ | ☐ |
 | NOTIF-06 | Empty state (fresh account) | "Nothing new" | ☐ | ☐ |
 
-### 3.10 Robustness (ROB)
+### 3.12 Robustness (ROB)
 
 | ID | Steps | Expected | iOS | Android |
 |---|---|---|---|---|
@@ -376,7 +415,7 @@ Fix blockers and majors before the usability study. Retest the failed ID and its
 | Layer | Result | Date | By |
 |---|---|---|---|
 | 1. Automated (CI green on the last PR) | | | |
-| 2. `php artisan app:e2e` (101/101) | | | |
+| 2. `php artisan app:e2e` (127/127) | | | |
 | 3. Manual, iPhone (all IDs ticked) | | | |
 | 3. Manual, Android (all IDs ticked) | | | |
 | 4. Deployment checklist | | | |

@@ -1,9 +1,11 @@
 import { api } from './client';
-import { ApiEnvelope, Listing, StudyGroup } from './types';
+import { ApiEnvelope, CampusEvent, Listing, Project, StudyGroup } from './types';
 
 export interface HomeFeed {
   groups: StudyGroup[];
   listings: Listing[];
+  events: CampusEvent[];
+  projects: Project[];
   /** 'model' when the recommender ranked the feed, 'rules' when the SQL ordering did. */
   source: 'model' | 'rules';
 }

@@ -20,7 +20,16 @@ export interface ChatMessage {
   created_at: string;
 }
 
-export type NotificationType = 'message' | 'loan_accepted' | 'loan_due_soon' | 'loan_overdue';
+export type NotificationType =
+  | 'message'
+  | 'loan_accepted'
+  | 'loan_due_soon'
+  | 'loan_overdue'
+  | 'event_starting_soon'
+  | 'event_cancelled'
+  | 'project_join_requested'
+  | 'project_request_accepted'
+  | 'project_request_declined';
 
 export interface AppNotification {
   id: string;
@@ -33,6 +42,11 @@ export interface AppNotification {
     amount?: number;
     due_date?: string | null;
     other?: { id: number; name: string } | null;
+    event_id?: number;
+    project_id?: number;
+    title?: string;
+    starts_at?: string;
+    location?: string;
   };
   read_at: string | null;
   created_at: string;

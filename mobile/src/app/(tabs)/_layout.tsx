@@ -26,7 +26,7 @@ export default function TabsLayout() {
         name="index"
         options={{ title: 'Home', tabBarIcon: tabIcon('home', 'home-outline'), headerRight: () => <HeaderActions /> }}
       />
-      <Tabs.Screen name="groups" options={{ title: 'Study Groups', tabBarIcon: tabIcon('people', 'people-outline') }} />
+      <Tabs.Screen name="groups" options={{ title: 'Campus', tabBarIcon: tabIcon('people', 'people-outline') }} />
       <Tabs.Screen name="market" options={{ title: 'Marketplace', tabBarIcon: tabIcon('pricetag', 'pricetag-outline') }} />
       <Tabs.Screen name="wallet" options={{ title: 'Lending', tabBarIcon: tabIcon('wallet', 'wallet-outline') }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: tabIcon('person', 'person-outline') }} />

@@ -9,6 +9,7 @@ import { getErrorMessage } from '@/api/errors';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Screen } from '@/components/Screen';
+import { TagList } from '@/components/TagList';
 import { TrustCard } from '@/components/TrustCard';
 import { useAuth } from '@/context/AuthContext';
 import { colors, spacing, typography } from '@/theme';
@@ -49,6 +50,7 @@ export default function Profile() {
         <Text style={typography.caption}>{user?.email}</Text>
         {details ? <Text style={typography.body}>{details}</Text> : null}
         {user?.bio ? <Text style={typography.body}>{user.bio}</Text> : null}
+        <TagList tags={user?.interests} words={user?.skills} />
       </Card>
 
       {trust ? <TrustCard trust={trust} /> : null}

@@ -2,16 +2,20 @@
 
 namespace Database\Seeders;
 
+use App\Enums\CampusTag;
 use App\Enums\ListingCategory;
 use App\Enums\ListingCondition;
 use App\Enums\ListingStatus;
 use App\Enums\LoanStatus;
+use App\Enums\ProjectMemberStatus;
 use App\Enums\TrustEventType;
 use App\Models\Conversation;
 use App\Models\Course;
+use App\Models\Event;
 use App\Models\Listing;
 use App\Models\ListingRating;
 use App\Models\Loan;
+use App\Models\Project;
 use App\Models\StudyGroup;
 use App\Models\User;
 use App\Models\Vouch;
@@ -32,6 +36,9 @@ use Illuminate\Support\Collection;
  *   202300001@ua.edu.lb  Test User Two    verified, same courses (the "other student")
  *   202300002@ua.edu.lb  Test User Three  verified, same courses (an outsider for permission checks)
  *   202300009@ua.edu.lb  Unverified User  email not verified
+ *
+ * It also adds upcoming events with people going, projects looking for members, and
+ * interests and skills on most profiles (fixed ones for the three test accounts).
  */
 class DemoSeeder extends Seeder
 {
@@ -69,6 +76,48 @@ class DemoSeeder extends Seeder
 
     private const LOCATIONS = ['Library, 2nd floor', 'Cafeteria', 'Room B204', 'Study hall', 'Online (Teams)'];
 
+    /**
+     * Upcoming events by topic: [title, location, hour].
+     *
+     * @var array<string, list<array{string, string, int}>>
+     */
+    private const EVENTS = [
+        'tech' => [['Intro to Git and GitHub workshop', 'Computer lab 3', 14], ['Mobile app hackathon', 'Main auditorium', 10], ['AI study circle', 'Room B204', 16]],
+        'career' => [['CV and LinkedIn clinic', 'Career center', 12], ['Meet the alumni: software careers', 'Main auditorium', 15]],
+        'sports' => [['Five-a-side football', 'Sports field', 18], ['Campus 5K fun run', 'Main gate', 8]],
+        'social' => [['Board games night', 'Cafeteria', 19], ['Welcome back mixer', 'Student lounge', 18]],
+        'arts' => [['Photography walk', 'Main gate', 16], ['Open mic night', 'Student lounge', 20]],
+        'culture' => [['Lebanese food fair', 'Cafeteria', 13]],
+        'volunteering' => [['Beach clean-up', 'Ramlet al Baida', 9], ['Blood donation drive', 'Health center', 11]],
+        'academic' => [['Calculus exam review talk', 'Room A101', 15], ['Research methods seminar', 'Library, 2nd floor', 13]],
+    ];
+
+    /**
+     * Projects looking for members: [title, description, skills needed, tags].
+     *
+     * @var list<array{string, string, list<string>, list<string>}>
+     */
+    private const PROJECTS = [
+        ['Campus lost and found app', 'A small app where students post things they lost or found on campus.', ['React Native', 'Laravel', 'UI design'], ['tech']],
+        ['Student startup pitch deck', 'Preparing a pitch for the university startup competition in December.', ['Marketing', 'Public speaking', 'Excel'], ['career']],
+        ['Short film for the arts festival', 'A five minute film about student life, to show at the spring festival.', ['Video editing', 'Photography', 'Writing'], ['arts', 'culture']],
+        ['Charity run organizing team', 'Organizing a 5K run to raise money for a local NGO.', ['Event planning', 'Marketing'], ['volunteering', 'sports']],
+        ['Machine learning study project', 'Building a model that predicts exam stress from sleep data, for practice.', ['Python', 'Machine learning'], ['tech', 'academic']],
+        ['Business club website', 'Redesigning the Business club website and adding an events page.', ['UI design', 'Laravel'], ['tech', 'career']],
+        ['Podcast about campus life', 'A weekly podcast interviewing students and teachers.', ['Writing', 'Public speaking', 'Video editing'], ['social', 'culture']],
+        ['Arduino weather station', 'A small weather station on the engineering building roof.', ['Arduino', 'Python'], ['tech', 'academic']],
+    ];
+
+    /**
+     * Skills students list on their profile, by major.
+     *
+     * @var array<string, list<string>>
+     */
+    private const SKILLS = [
+        'Computer Science' => ['Laravel', 'Python', 'React Native', 'SQL', 'Machine learning', 'UI design'],
+        'Business' => ['Marketing', 'Excel', 'Public speaking', 'Finance', 'Event planning'],
+    ];
+
     public function run(TrustService $trust): void
     {
         // Same seed, same campus: every reset gives the same students, scores and chats,
@@ -95,6 +144,11 @@ class DemoSeeder extends Seeder
         $this->loans($students, $trust);
         $this->vouches($students, $trust);
         $this->conversations($demo, $students->reject(fn (User $s): bool => $s->is($demo)));
+
+        // Added after everything above so the earlier demo data stays exactly the same.
+        $this->interestsAndSkills($students);
+        $this->events($students, $courses);
+        $this->projects($students);
 
         $students->each(fn (User $student) => $trust->refresh($student));
     }
@@ -328,6 +382,109 @@ class DemoSeeder extends Seeder
     /**
      * Collection::random() uses PHP's secure randomizer, which cannot be seeded. Faker can.
      */
+    /**
+     * Fixed interests and skills for the test accounts; most demo students fill theirs in, some leave them empty.
+     *
+     * @param  Collection<int, User>  $students
+     */
+    private function interestsAndSkills(Collection $students): void
+    {
+        $fixed = [
+            '202300000@ua.edu.lb' => [['tech', 'career'], ['Laravel', 'SQL']],
+            '202300001@ua.edu.lb' => [['tech', 'sports'], ['Python', 'UI design']],
+            '202300002@ua.edu.lb' => [['arts', 'social'], ['Photography']],
+        ];
+
+        foreach ($fixed as $email => [$interests, $skills]) {
+            User::firstWhere('email', $email)?->forceFill(['interests' => $interests, 'skills' => $skills])->save();
+        }
+
+        $tags = array_map(fn (CampusTag $tag): string => $tag->value, CampusTag::cases());
+
+        $students
+            ->reject(fn (User $student): bool => array_key_exists($student->email, $fixed))
+            ->each(function (User $student) use ($tags): void {
+                $student->forceFill([
+                    'interests' => fake()->boolean(75) ? fake()->randomElements($tags, fake()->numberBetween(1, 3)) : [],
+                    'skills' => fake()->boolean(70) ? fake()->randomElements(self::SKILLS[$student->major] ?? self::SKILLS['Computer Science'], fake()->numberBetween(1, 3)) : [],
+                ])->save();
+            });
+    }
+
+    /**
+     * Upcoming events with people going, plus a few past ones so students have a history.
+     *
+     * @param  Collection<int, User>  $students
+     * @param  Collection<int, Course>  $courses
+     */
+    private function events(Collection $students, Collection $courses): void
+    {
+        $testers = User::query()->whereIn('email', ['202300000@ua.edu.lb', '202300001@ua.edu.lb', '202300002@ua.edu.lb'])->pluck('id')->all();
+        $others = $students->reject(fn (User $student): bool => in_array($student->id, $testers, true))->values();
+
+        foreach (self::EVENTS as $tag => $events) {
+            foreach ($events as [$title, $location, $hour]) {
+                $startsAt = now()->addDays(fake()->numberBetween(2, 20))->setTime($hour, 0);
+                $event = Event::factory()->create([
+                    'creator_id' => $this->pick($others)->id,
+                    'course_id' => $tag === 'academic' ? $courses->firstWhere('code', fake()->randomElement(['MTH-101', 'STA-201']))?->id : null,
+                    'title' => $title,
+                    'description' => fake()->boolean(70) ? fake()->sentence(12) : null,
+                    'location' => $location,
+                    'starts_at' => $startsAt,
+                    'ends_at' => $startsAt->copy()->addHours(fake()->numberBetween(1, 3)),
+                    'capacity' => fake()->boolean(40) ? fake()->numberBetween(10, 40) : null,
+                    'tags' => array_values(array_unique([$tag, ...(fake()->boolean(30) ? [fake()->randomElement(['social', 'career', 'academic'])] : [])])),
+                ]);
+                $interested = $others->filter(fn (User $student): bool => in_array($tag, $student->interests ?? [], true));
+                $event->attendees()->syncWithoutDetaching($this->pickMany($interested, min(fake()->numberBetween(1, 6), $interested->count()))->modelKeys());
+            }
+        }
+
+        foreach (['Freshers welcome party' => 'social', 'Programming contest' => 'tech', 'Charity bake sale' => 'volunteering'] as $title => $tag) {
+            $event = Event::factory()->create([
+                'creator_id' => $this->pick($others)->id,
+                'title' => $title,
+                'location' => 'Student lounge',
+                'starts_at' => now()->subDays(fake()->numberBetween(7, 40))->setTime(18, 0),
+                'ends_at' => null,
+                'tags' => [$tag],
+            ]);
+            $event->attendees()->syncWithoutDetaching($this->pickMany($others, 8)->modelKeys());
+        }
+    }
+
+    /**
+     * Projects looking for members, some with a team and pending requests already.
+     *
+     * @param  Collection<int, User>  $students
+     */
+    private function projects(Collection $students): void
+    {
+        $testers = User::query()->whereIn('email', ['202300000@ua.edu.lb', '202300001@ua.edu.lb', '202300002@ua.edu.lb'])->pluck('id')->all();
+        $others = $students->reject(fn (User $student): bool => in_array($student->id, $testers, true))->values();
+
+        foreach (self::PROJECTS as $i => [$title, $description, $skills, $tags]) {
+            $owner = $this->pick($others);
+            $project = Project::factory()->create([
+                'owner_id' => $owner->id,
+                'title' => $title,
+                'description' => $description,
+                'skills_needed' => $skills,
+                'tags' => $tags,
+                'team_size' => fake()->numberBetween(3, 6),
+                'created_at' => now()->subDays(fake()->numberBetween(1, 20)),
+            ]);
+            $candidates = $others->reject(fn (User $student): bool => $student->is($owner));
+            $team = $this->pickMany($candidates, fake()->numberBetween(0, 1));
+            $project->people()->syncWithoutDetaching($team->mapWithKeys(fn (User $member): array => [$member->id => ['status' => ProjectMemberStatus::Accepted->value]])->all());
+            if ($i % 3 === 0) {
+                $waiting = $this->pick($candidates->reject(fn (User $student): bool => $team->contains($student)));
+                $project->people()->syncWithoutDetaching([$waiting->id => ['status' => ProjectMemberStatus::Pending->value, 'message' => 'I would love to help.']]);
+            }
+        }
+    }
+
     private function pick(Collection $items): mixed
     {
         return fake()->randomElement($items->values()->all());

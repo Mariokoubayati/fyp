@@ -1,8 +1,10 @@
 {
-  "version": "rec-lr-1",
+  "version": "rec-lr-2",
   "training": {
     "group_rows": 217904,
-    "listing_rows": 135300
+    "listing_rows": 135300,
+    "event_rows": 64300,
+    "project_rows": 5450
   },
   "coefficients": {
     "groups": {
@@ -23,6 +25,29 @@
       "relative_price": -0.545,
       "age_days": -0.184,
       "seller_is_co_member": 0.035
+    },
+    "events": {
+      "interest_overlap": 0.316,
+      "no_profile_interests": 0.179,
+      "tag_affinity": 0.255,
+      "course_enrolled": 0.186,
+      "co_members_going": 0.24,
+      "same_major_share": 0.386,
+      "attendee_count": 0.34,
+      "fill_ratio": 0.008,
+      "days_until_start": 0.046,
+      "hour_distance": 0.083
+    },
+    "projects": {
+      "skill_match": 0.718,
+      "no_profile_skills": 0.338,
+      "interest_overlap": 0.105,
+      "course_enrolled": 0.113,
+      "owner_is_co_member": -0.112,
+      "co_members_in_team": 0.118,
+      "same_major_owner": 0.381,
+      "open_spots": 0.032,
+      "age_days": -0.099
     }
   },
   "tests": {
@@ -81,6 +106,72 @@
         "students": 94,
         "precision_at_5": 0.1362,
         "recall_at_5": 0.6809
+      },
+      "events_model": {
+        "decisions": 1510,
+        "avg_candidates": 19.8,
+        "hit_at_1": 0.2331,
+        "hit_at_3": 0.4629,
+        "hit_at_5": 0.5874,
+        "mrr": 0.4003,
+        "students": 231,
+        "precision_at_5": 0.1039,
+        "recall_at_5": 0.4452
+      },
+      "events_sql": {
+        "decisions": 1510,
+        "avg_candidates": 19.8,
+        "hit_at_1": 0.1192,
+        "hit_at_3": 0.2821,
+        "hit_at_5": 0.4093,
+        "mrr": 0.2722,
+        "students": 231,
+        "precision_at_5": 0.0468,
+        "recall_at_5": 0.1926
+      },
+      "events_soonest": {
+        "decisions": 1510,
+        "avg_candidates": 19.8,
+        "hit_at_1": 0.1033,
+        "hit_at_3": 0.2079,
+        "hit_at_5": 0.3285,
+        "mrr": 0.2343,
+        "students": 231,
+        "precision_at_5": 0.0061,
+        "recall_at_5": 0.0281
+      },
+      "projects_model": {
+        "decisions": 178,
+        "avg_candidates": 16.1,
+        "hit_at_1": 0.3876,
+        "hit_at_3": 0.6348,
+        "hit_at_5": 0.7528,
+        "mrr": 0.5456,
+        "students": 58,
+        "precision_at_5": 0.1724,
+        "recall_at_5": 0.8448
+      },
+      "projects_sql": {
+        "decisions": 178,
+        "avg_candidates": 16.1,
+        "hit_at_1": 0.2978,
+        "hit_at_3": 0.5618,
+        "hit_at_5": 0.6798,
+        "mrr": 0.4792,
+        "students": 58,
+        "precision_at_5": 0.1552,
+        "recall_at_5": 0.7586
+      },
+      "projects_newest": {
+        "decisions": 178,
+        "avg_candidates": 16.1,
+        "hit_at_1": 0.1067,
+        "hit_at_3": 0.2022,
+        "hit_at_5": 0.3989,
+        "mrr": 0.253,
+        "students": 58,
+        "precision_at_5": 0.0931,
+        "recall_at_5": 0.4655
       }
     },
     "larger_campus": {
@@ -138,6 +229,72 @@
         "students": 202,
         "precision_at_5": 0.095,
         "recall_at_5": 0.4678
+      },
+      "events_model": {
+        "decisions": 2507,
+        "avg_candidates": 36.4,
+        "hit_at_1": 0.1747,
+        "hit_at_3": 0.3414,
+        "hit_at_5": 0.4551,
+        "mrr": 0.3153,
+        "students": 484,
+        "precision_at_5": 0.0678,
+        "recall_at_5": 0.26
+      },
+      "events_sql": {
+        "decisions": 2507,
+        "avg_candidates": 36.4,
+        "hit_at_1": 0.0778,
+        "hit_at_3": 0.1827,
+        "hit_at_5": 0.2629,
+        "mrr": 0.191,
+        "students": 484,
+        "precision_at_5": 0.0397,
+        "recall_at_5": 0.1538
+      },
+      "events_soonest": {
+        "decisions": 2507,
+        "avg_candidates": 36.4,
+        "hit_at_1": 0.0411,
+        "hit_at_3": 0.1237,
+        "hit_at_5": 0.1851,
+        "mrr": 0.142,
+        "students": 484,
+        "precision_at_5": 0.0058,
+        "recall_at_5": 0.0243
+      },
+      "projects_model": {
+        "decisions": 262,
+        "avg_candidates": 16.1,
+        "hit_at_1": 0.2863,
+        "hit_at_3": 0.542,
+        "hit_at_5": 0.7252,
+        "mrr": 0.469,
+        "students": 63,
+        "precision_at_5": 0.1333,
+        "recall_at_5": 0.6508
+      },
+      "projects_sql": {
+        "decisions": 262,
+        "avg_candidates": 16.1,
+        "hit_at_1": 0.2137,
+        "hit_at_3": 0.4771,
+        "hit_at_5": 0.6221,
+        "mrr": 0.4008,
+        "students": 63,
+        "precision_at_5": 0.1302,
+        "recall_at_5": 0.6349
+      },
+      "projects_newest": {
+        "decisions": 262,
+        "avg_candidates": 16.1,
+        "hit_at_1": 0.0763,
+        "hit_at_3": 0.2366,
+        "hit_at_5": 0.3664,
+        "mrr": 0.2395,
+        "students": 63,
+        "precision_at_5": 0.0825,
+        "recall_at_5": 0.3968
       }
     }
   }

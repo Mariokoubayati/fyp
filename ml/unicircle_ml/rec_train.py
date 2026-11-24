@@ -2,8 +2,9 @@
 
     python -m unicircle_ml.rec_train
 
-Training: every join and purchase in one synthetic campus, each against
-randomly drawn items the student could have picked instead at that moment.
+Training: every join, purchase, event RSVP and project request in one synthetic
+campus, each against randomly drawn items the student could have picked instead
+at that moment.
 
 Evaluation (a different campus): freeze time at day 90 of 120. For each
 student, rank what is open at that moment and check the top 5 against what
@@ -27,11 +28,21 @@ from sklearn.pipeline import make_pipeline  # noqa: E402
 from sklearn.preprocessing import StandardScaler  # noqa: E402
 
 from .rec_simulate import Campus, RecConfig  # noqa: E402
-from .recommend import DAY, GROUP_FEATURES, LISTING_FEATURES, group_features, listing_features  # noqa: E402
+from .recommend import (  # noqa: E402
+    DAY,
+    EVENT_FEATURES,
+    GROUP_FEATURES,
+    LISTING_FEATURES,
+    PROJECT_FEATURES,
+    event_features,
+    group_features,
+    listing_features,
+    project_features,
+)
 
 ROOT = Path(__file__).resolve().parent.parent
 MODELS, REPORTS = ROOT / "models", ROOT / "reports"
-VERSION = "rec-lr-1"
+VERSION = "rec-lr-2"
 K = 5
 NEGATIVES = 10
 
@@ -66,6 +77,39 @@ def training_rows(campus: Campus, rng: np.random.Generator):
             ly.append(label)
 
     return np.array(gX), np.array(gy), np.array(lX), np.array(ly)
+
+
+def hub_training_rows(campus: Campus, rng: np.random.Generator):
+    """Event and project rows, built the same way as the group and listing rows."""
+    eX, ey, pX, py = [], [], [], []
+
+    for sid, eid, t in campus.rsvps:
+        candidates = campus.open_events_at(sid, t)
+        positive = [e for e in candidates if e.id == eid]
+        others = [e for e in candidates if e.id != eid]
+        if not positive:
+            continue
+        picked = [others[i] for i in rng.choice(len(others), size=min(NEGATIVES, len(others)), replace=False)] if others else []
+        user = campus.event_user(sid, t)
+        for e, label in [(positive[0], 1), *[(o, 0) for o in picked]]:
+            row = event_features(user, campus.event_payload(e, t), t)
+            eX.append([row[n] for n in EVENT_FEATURES])
+            ey.append(label)
+
+    for sid, pid, t in campus.requests:
+        candidates = campus.open_projects_at(sid, t)
+        positive = [p for p in candidates if p.id == pid]
+        others = [p for p in candidates if p.id != pid]
+        if not positive:
+            continue
+        picked = [others[i] for i in rng.choice(len(others), size=min(NEGATIVES, len(others)), replace=False)] if others else []
+        user = campus.project_user(sid, t)
+        for p, label in [(positive[0], 1), *[(o, 0) for o in picked]]:
+            row = project_features(user, campus.project_payload(p, t), t)
+            pX.append([row[n] for n in PROJECT_FEATURES])
+            py.append(label)
+
+    return np.array(eX), np.array(ey), np.array(pX), np.array(py)
 
 
 def fit(X, y):
@@ -194,6 +238,89 @@ def evaluate(campus: Campus, group_model, listing_model) -> dict:
     return {name: {**decisions[name], **summary(snapshot[name])} for name in decisions}
 
 
+def _overlap(a: list[str], b: list[str]) -> int:
+    return len({x.lower() for x in a} & {x.lower() for x in b})
+
+
+def rank_events(campus: Campus, model, sid: int, t: int) -> dict[str, list[int]]:
+    """Model ranking, today's SQL fallback (interests, then my courses, then soonest) and plain soonest."""
+    events = campus.open_events_at(sid, t)
+    if not events:
+        return {"model": [], "sql": [], "soonest": []}
+    user = campus.event_user(sid, t)
+    rows = [event_features(user, campus.event_payload(e, t), t) for e in events]
+    scores = model.predict_proba(np.array([[r[n] for n in EVENT_FEATURES] for r in rows]))[:, 1]
+    courses = set(user["course_ids"])
+    return {
+        "model": [events[i].id for i in np.argsort(-scores, kind="stable")],
+        "sql": [e.id for e in sorted(events, key=lambda e: (-_overlap(e.tags, user["interests"]), e.course not in courses, e.starts_at))],
+        "soonest": [e.id for e in sorted(events, key=lambda e: e.starts_at)],
+    }
+
+
+def rank_projects(campus: Campus, model, sid: int, t: int) -> dict[str, list[int]]:
+    """Model ranking, today's SQL fallback (skills, interests, my courses, newest) and plain newest."""
+    projects = campus.open_projects_at(sid, t)
+    if not projects:
+        return {"model": [], "sql": [], "newest": []}
+    user = campus.project_user(sid, t)
+    rows = [project_features(user, campus.project_payload(p, t), t) for p in projects]
+    scores = model.predict_proba(np.array([[r[n] for n in PROJECT_FEATURES] for r in rows]))[:, 1]
+    courses = set(user["course_ids"])
+    return {
+        "model": [projects[i].id for i in np.argsort(-scores, kind="stable")],
+        "sql": [p.id for p in sorted(projects, key=lambda p: (-_overlap(p.skills_needed, user["skills"]),
+                                                            -_overlap(p.tags, user["interests"]), p.course not in courses, -p.created_at))],
+        "newest": [p.id for p in sorted(projects, key=lambda p: -p.created_at)],
+    }
+
+
+def evaluate_hub(campus: Campus, event_model, project_model) -> dict:
+    """Same two measurements as evaluate(), for events and projects."""
+    T = campus.config.cutoff_day * DAY
+    positions: dict[str, list[int | None]] = {f"events_{k}": [] for k in ("model", "sql", "soonest")}
+    positions |= {f"projects_{k}": [] for k in ("model", "sql", "newest")}
+    sizes: dict[str, list[int]] = {"events": [], "projects": []}
+
+    for kind, choices, ranker, model in (("events", campus.rsvps, rank_events, event_model),
+                                         ("projects", campus.requests, rank_projects, project_model)):
+        for sid, item, t in choices:
+            if t < T:
+                continue
+            ranks = ranker(campus, model, sid, t)
+            if item not in ranks["model"]:
+                continue
+            sizes[kind].append(len(ranks["model"]))
+            for name, ranked in ranks.items():
+                positions[f"{kind}_{name}"].append(position(ranked, item))
+
+    decisions = {name: decision_metrics(p, sizes[name.split("_")[0]]) for name, p in positions.items()}
+
+    snapshot: dict[str, list] = {name: [] for name in decisions}
+    for kind, choices, ranker, model in (("events", campus.rsvps, rank_events, event_model),
+                                         ("projects", campus.requests, rank_projects, project_model)):
+        later: dict[int, set[int]] = {}
+        for sid, item, t in choices:
+            if t >= T:
+                later.setdefault(sid, set()).add(item)
+        for sid, items in later.items():
+            ranks = ranker(campus, model, sid, T)
+            relevant = items & set(ranks["model"])
+            if relevant:
+                for name, ranked in ranks.items():
+                    snapshot[f"{kind}_{name}"].append(at_k(ranked, relevant))
+
+    def summary(values):
+        arr = np.array(values) if values else np.zeros((0, 3))
+        return {
+            "students": int(len(arr)),
+            "precision_at_5": round(float(arr[:, 0].mean()), 4) if len(arr) else 0.0,
+            "recall_at_5": round(float(arr[:, 1].mean()), 4) if len(arr) else 0.0,
+        }
+
+    return {name: {**decisions[name], **summary(snapshot[name])} for name in decisions}
+
+
 def coefficients(model, names: list[str]) -> dict[str, float]:
     return {n: round(float(c), 3) for n, c in zip(names, model[-1].coef_[0])}
 
@@ -206,6 +333,8 @@ def main() -> dict:
     train = Campus(RecConfig(seed=31)).run()
     gX, gy, lX, ly = training_rows(train, rng)
     group_model, listing_model = fit(gX, gy), fit(lX, ly)
+    eX, ey, pX, py = hub_training_rows(train, rng)
+    event_model, project_model = fit(eX, ey), fit(pX, py)
 
     tests = {
         "same_size_campus": Campus(RecConfig(seed=32)).run(),
@@ -213,13 +342,21 @@ def main() -> dict:
     }
     results = {
         "version": VERSION,
-        "training": {"group_rows": int(len(gy)), "listing_rows": int(len(ly))},
-        "coefficients": {"groups": coefficients(group_model, GROUP_FEATURES), "listings": coefficients(listing_model, LISTING_FEATURES)},
-        "tests": {name: evaluate(campus, group_model, listing_model) for name, campus in tests.items()},
+        "training": {"group_rows": int(len(gy)), "listing_rows": int(len(ly)), "event_rows": int(len(ey)), "project_rows": int(len(py))},
+        "coefficients": {
+            "groups": coefficients(group_model, GROUP_FEATURES),
+            "listings": coefficients(listing_model, LISTING_FEATURES),
+            "events": coefficients(event_model, EVENT_FEATURES),
+            "projects": coefficients(project_model, PROJECT_FEATURES),
+        },
+        "tests": {name: {**evaluate(campus, group_model, listing_model), **evaluate_hub(campus, event_model, project_model)}
+                  for name, campus in tests.items()},
     }
 
-    joblib.dump({"groups": group_model, "listings": listing_model, "group_features": GROUP_FEATURES,
-                 "listing_features": LISTING_FEATURES, "version": VERSION}, MODELS / "recommender.joblib")
+    joblib.dump({"groups": group_model, "listings": listing_model, "events": event_model, "projects": project_model,
+                 "group_features": GROUP_FEATURES, "listing_features": LISTING_FEATURES,
+                 "event_features": EVENT_FEATURES, "project_features": PROJECT_FEATURES, "version": VERSION},
+                MODELS / "recommender.joblib")
     (REPORTS / "recommender_metrics.json").write_text(json.dumps(results, indent=2) + "\n")
     plot(results)
     write_report(results)
@@ -250,6 +387,12 @@ def write_report(results: dict) -> None:
         "listings_newest": "Listings: newest first (today's feed)",
         "listings_my_courses_newest": "Listings: my courses first, then newest",
         "listings_model": "Listings: model",
+        "events_soonest": "Events: soonest first",
+        "events_sql": "Events: SQL today (my interests, my courses, soonest)",
+        "events_model": "Events: model",
+        "projects_newest": "Projects: newest first",
+        "projects_sql": "Projects: SQL today (my skills, my interests, my courses, newest)",
+        "projects_model": "Projects: model",
     }
     lines = [
         "# Recommender: results",
@@ -262,11 +405,14 @@ def write_report(results: dict) -> None:
     ]
     for test, rows in results["tests"].items():
         g, l = rows["groups_model"], rows["listings_model"]
+        e, p = rows["events_model"], rows["projects_model"]
         lines += [
             f"## {test.replace('_', ' ').capitalize()}",
             "",
             f"Ranked at the moment of each real choice: {g['decisions']} group joins (about {g['avg_candidates']:.0f} open groups each time) "
-            f"and {l['decisions']} purchases (about {l['avg_candidates']:.0f} listings each time).",
+            f"and {l['decisions']} purchases (about {l['avg_candidates']:.0f} listings each time), "
+            f"{e['decisions']} event RSVPs (about {e['avg_candidates']:.0f} upcoming events each time) "
+            f"and {p['decisions']} project join requests (about {p['avg_candidates']:.0f} open projects each time).",
             "",
             "| Method | Hit@1 ↑ | Hit@3 ↑ | Hit@5 ↑ | MRR ↑ | precision@5 ↑ | recall@5 ↑ |",
             "|---|---|---|---|---|---|---|",
@@ -284,18 +430,26 @@ def write_report(results: dict) -> None:
         "| Groups | Weight | Listings | Weight |",
         "|---|---|---|---|",
     ]
-    g = list(results["coefficients"]["groups"].items())
-    li = list(results["coefficients"]["listings"].items())
-    for i in range(max(len(g), len(li))):
-        left = f"{g[i][0]} | {g[i][1]:+.3f}" if i < len(g) else " | "
-        right = f"{li[i][0]} | {li[i][1]:+.3f}" if i < len(li) else " | "
-        lines.append(f"| {left} | {right} |")
+    def pairs(a_key: str, b_key: str) -> None:
+        a = list(results["coefficients"][a_key].items())
+        b = list(results["coefficients"][b_key].items())
+        for i in range(max(len(a), len(b))):
+            left = f"{a[i][0]} | {a[i][1]:+.3f}" if i < len(a) else " | "
+            right = f"{b[i][0]} | {b[i][1]:+.3f}" if i < len(b) else " | "
+            lines.append(f"| {left} | {right} |")
+
+    pairs("groups", "listings")
+    lines += ["", "| Events | Weight | Projects | Weight |", "|---|---|---|---|"]
+    pairs("events", "projects")
     lines += [
         "",
         "## Limitations",
         "",
         "- Synthetic data: students choose from hidden friendships, time preferences and interests that we designed.",
         "  The model only sees their traces (past group partners, past hours, past purchases), never the hidden values.",
+        "- Events and projects: students choose from hidden tastes per topic, real skills and friends. The model sees",
+        "  only what they typed on their profile (a third left interests empty, about a fifth listed no skills) and",
+        "  their traces (who they met in groups, events and teams; which events they went to and at what time).",
         "- Hit@k: the item the student actually chose was in the top k at that moment. MRR: average of 1 / its position.",
         "  precision@5 and recall@5 freeze time at day 90 and compare each student's top 5 with everything they chose later;",
         "  precision@5 stays low because most students only join or buy one or two things in 30 days.",

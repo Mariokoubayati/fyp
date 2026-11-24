@@ -14,7 +14,7 @@ class UpdateProfileController extends Controller
     public function __invoke(UpdateProfileRequest $request): UserResource
     {
         $user = $request->user();
-        $user->update($request->validated());
+        $user->update($request->profile());
 
         return new UserResource($user);
     }

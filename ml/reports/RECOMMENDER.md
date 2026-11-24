@@ -7,7 +7,7 @@ available listings are ranked, and the top 5 are checked against what the studen
 
 ## Same size campus
 
-Ranked at the moment of each real choice: 4726 group joins (about 14 open groups each time) and 3047 purchases (about 27 listings each time).
+Ranked at the moment of each real choice: 4726 group joins (about 14 open groups each time) and 3047 purchases (about 27 listings each time), 1510 event RSVPs (about 20 upcoming events each time) and 178 project join requests (about 16 open projects each time).
 
 | Method | Hit@1 ↑ | Hit@3 ↑ | Hit@5 ↑ | MRR ↑ | precision@5 ↑ | recall@5 ↑ |
 |---|---|---|---|---|---|---|
@@ -16,10 +16,16 @@ Ranked at the moment of each real choice: 4726 group joins (about 14 open groups
 | Listings: newest first (today's feed) | 0.046 | 0.142 | 0.222 | 0.166 | 0.049 | 0.245 |
 | Listings: my courses first, then newest | 0.245 | 0.494 | 0.572 | 0.406 | 0.136 | 0.681 |
 | Listings: model | 0.311 | 0.546 | 0.644 | 0.470 | 0.138 | 0.686 |
+| Events: soonest first | 0.103 | 0.208 | 0.329 | 0.234 | 0.006 | 0.028 |
+| Events: SQL today (my interests, my courses, soonest) | 0.119 | 0.282 | 0.409 | 0.272 | 0.047 | 0.193 |
+| Events: model | 0.233 | 0.463 | 0.587 | 0.400 | 0.104 | 0.445 |
+| Projects: newest first | 0.107 | 0.202 | 0.399 | 0.253 | 0.093 | 0.466 |
+| Projects: SQL today (my skills, my interests, my courses, newest) | 0.298 | 0.562 | 0.680 | 0.479 | 0.155 | 0.759 |
+| Projects: model | 0.388 | 0.635 | 0.753 | 0.546 | 0.172 | 0.845 |
 
 ## Larger campus
 
-Ranked at the moment of each real choice: 7945 group joins (about 13 open groups each time) and 5241 purchases (about 46 listings each time).
+Ranked at the moment of each real choice: 7945 group joins (about 13 open groups each time) and 5241 purchases (about 46 listings each time), 2507 event RSVPs (about 36 upcoming events each time) and 262 project join requests (about 16 open projects each time).
 
 | Method | Hit@1 ↑ | Hit@3 ↑ | Hit@5 ↑ | MRR ↑ | precision@5 ↑ | recall@5 ↑ |
 |---|---|---|---|---|---|---|
@@ -28,6 +34,12 @@ Ranked at the moment of each real choice: 7945 group joins (about 13 open groups
 | Listings: newest first (today's feed) | 0.020 | 0.061 | 0.113 | 0.099 | 0.021 | 0.104 |
 | Listings: my courses first, then newest | 0.152 | 0.401 | 0.512 | 0.315 | 0.095 | 0.468 |
 | Listings: model | 0.219 | 0.451 | 0.570 | 0.378 | 0.111 | 0.542 |
+| Events: soonest first | 0.041 | 0.124 | 0.185 | 0.142 | 0.006 | 0.024 |
+| Events: SQL today (my interests, my courses, soonest) | 0.078 | 0.183 | 0.263 | 0.191 | 0.040 | 0.154 |
+| Events: model | 0.175 | 0.341 | 0.455 | 0.315 | 0.068 | 0.260 |
+| Projects: newest first | 0.076 | 0.237 | 0.366 | 0.239 | 0.083 | 0.397 |
+| Projects: SQL today (my skills, my interests, my courses, newest) | 0.214 | 0.477 | 0.622 | 0.401 | 0.130 | 0.635 |
+| Projects: model | 0.286 | 0.542 | 0.725 | 0.469 | 0.133 | 0.651 |
 
 ## What the model learned (logistic regression weights, standardized features)
 
@@ -43,10 +55,26 @@ Ranked at the moment of each real choice: 7945 group joins (about 13 open groups
 | hour_distance | -0.264 |  |  |
 | member_count | -1.055 |  |  |
 
+| Events | Weight | Projects | Weight |
+|---|---|---|---|
+| interest_overlap | +0.316 | skill_match | +0.718 |
+| no_profile_interests | +0.179 | no_profile_skills | +0.338 |
+| tag_affinity | +0.255 | interest_overlap | +0.105 |
+| course_enrolled | +0.186 | course_enrolled | +0.113 |
+| co_members_going | +0.240 | owner_is_co_member | -0.112 |
+| same_major_share | +0.386 | co_members_in_team | +0.118 |
+| attendee_count | +0.340 | same_major_owner | +0.381 |
+| fill_ratio | +0.008 | open_spots | +0.032 |
+| days_until_start | +0.046 | age_days | -0.099 |
+| hour_distance | +0.083 |  |  |
+
 ## Limitations
 
 - Synthetic data: students choose from hidden friendships, time preferences and interests that we designed.
   The model only sees their traces (past group partners, past hours, past purchases), never the hidden values.
+- Events and projects: students choose from hidden tastes per topic, real skills and friends. The model sees
+  only what they typed on their profile (a third left interests empty, about a fifth listed no skills) and
+  their traces (who they met in groups, events and teams; which events they went to and at what time).
 - Hit@k: the item the student actually chose was in the top k at that moment. MRR: average of 1 / its position.
   precision@5 and recall@5 freeze time at day 90 and compare each student's top 5 with everything they chose later;
   precision@5 stays low because most students only join or buy one or two things in 30 days.

@@ -7,8 +7,10 @@ import { fetchHomeFeed, HomeFeed } from '@/api/recommendations';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { EmptyState } from '@/components/EmptyState';
+import { EventCard } from '@/components/EventCard';
 import { ListingCard } from '@/components/ListingCard';
 import { Loading } from '@/components/Loading';
+import { ProjectCard } from '@/components/ProjectCard';
 import { Screen } from '@/components/Screen';
 import { StudyGroupCard } from '@/components/StudyGroupCard';
 import { useAuth } from '@/context/AuthContext';
@@ -35,7 +37,8 @@ export default function Home() {
     }, []),
   );
 
-  const empty = feed !== null && feed.groups.length === 0 && feed.listings.length === 0;
+  const empty =
+    feed !== null && feed.groups.length === 0 && feed.listings.length === 0 && feed.events.length === 0 && feed.projects.length === 0;
 
   return (
     <Screen scroll safeArea={false}>
@@ -43,8 +46,8 @@ export default function Home() {
         <Text style={typography.heading}>Hi, {user?.name}</Text>
         <Text style={typography.caption}>
           {feed?.source === 'model'
-            ? 'Picked for you from your courses and the people you study with.'
-            : 'Study groups and items for your courses.'}
+            ? 'Picked for you from your courses, interests and the people you study with.'
+            : 'Study groups, items, events and projects for your courses and interests.'}
         </Text>
       </Card>
 
@@ -56,9 +59,10 @@ export default function Home() {
           <EmptyState
             icon="sparkles-outline"
             title="Nothing to suggest yet"
-            message="Add your courses and we will suggest study groups and items for them."
+            message="Add your courses and interests and we will suggest study groups, items, events and projects."
           />
           <Button title="Add my courses" onPress={() => router.push('/courses')} />
+          <Button title="Add my interests" variant="secondary" onPress={() => router.push('/edit-profile')} />
         </View>
       ) : null}
 
@@ -66,7 +70,7 @@ export default function Home() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={typography.heading}>Study groups for you</Text>
-            <Text style={styles.link} onPress={() => router.push('/groups')}>
+            <Text style={styles.link} onPress={() => router.push({ pathname: '/groups', params: { section: 'groups' } })}>
               See all
             </Text>
           </View>
@@ -86,6 +90,34 @@ export default function Home() {
           </View>
           {feed.listings.map((listing) => (
             <ListingCard key={listing.id} listing={listing} onPress={() => router.push(`/listing/${listing.id}`)} />
+          ))}
+        </View>
+      ) : null}
+
+      {feed && feed.events.length > 0 ? (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={typography.heading}>Events for you</Text>
+            <Text style={styles.link} onPress={() => router.push({ pathname: '/groups', params: { section: 'events' } })}>
+              See all
+            </Text>
+          </View>
+          {feed.events.map((event) => (
+            <EventCard key={event.id} event={event} onPress={() => router.push(`/event/${event.id}`)} />
+          ))}
+        </View>
+      ) : null}
+
+      {feed && feed.projects.length > 0 ? (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={typography.heading}>Projects looking for you</Text>
+            <Text style={styles.link} onPress={() => router.push({ pathname: '/groups', params: { section: 'projects' } })}>
+              See all
+            </Text>
+          </View>
+          {feed.projects.map((project) => (
+            <ProjectCard key={project.id} project={project} onPress={() => router.push(`/project/${project.id}`)} />
           ))}
         </View>
       ) : null}
