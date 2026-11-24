@@ -15,7 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getErrorMessage } from '@/api/errors';
-import { blockStudent, ChatMessage, fetchMessages, reportStudent, ReportReason, sendMessage } from '@/api/messaging';
+import { blockStudent, ChatMessage, fetchMessages, MessagePage, reportStudent, ReportReason, sendMessage } from '@/api/messaging';
 import { Loading } from '@/components/Loading';
 import { colors, radius, spacing, typography } from '@/theme';
 
@@ -45,14 +45,17 @@ export default function Chat() {
   const listRef = useRef<FlatList<ChatMessage>>(null);
   const lastId = useRef<number | undefined>(undefined);
 
-  const merge = useCallback((incoming: ChatMessage[]) => {
-    if (incoming.length === 0) {
+  const merge = useCallback(({ messages: incoming, seenUpTo }: MessagePage) => {
+    if (incoming.length === 0 && seenUpTo === null) {
       return;
     }
     setMessages((current) => {
       const byId = new Map((current ?? []).map((m) => [m.id, m]));
       incoming.forEach((m) => byId.set(m.id, m));
-      const next = [...byId.values()].sort((a, b) => a.id - b.id);
+      const next = [...byId.values()]
+        .sort((a, b) => a.id - b.id)
+        // The other student has read up to seenUpTo: show "Seen" on my older messages without reloading them.
+        .map((m) => (m.is_mine && !m.read_at && seenUpTo !== null && m.id <= seenUpTo ? { ...m, read_at: new Date().toISOString() } : m));
       lastId.current = next[next.length - 1]?.id;
       return next;
     });
@@ -91,7 +94,7 @@ export default function Chat() {
     setSending(true);
     setError(null);
     try {
-      merge([await sendMessage(conversationId, body)]);
+      merge({ messages: [await sendMessage(conversationId, body)], seenUpTo: null });
       setDraft('');
     } catch (e) {
       setError(getErrorMessage(e));

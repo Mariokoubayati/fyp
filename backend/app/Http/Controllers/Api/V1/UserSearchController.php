@@ -22,7 +22,7 @@ class UserSearchController extends Controller
             : User::query()
                 ->whereKeyNot($request->user()->id)
                 ->whereNotNull('email_verified_at')
-                ->where('name', 'like', "%{$search}%")
+                ->whereContains('name', $search)
                 ->orderBy('name')
                 ->limit(10)
                 ->get();

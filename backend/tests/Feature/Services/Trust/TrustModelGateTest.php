@@ -114,9 +114,24 @@ class TrustModelGateTest extends TestCase
                 'purpose' => 'Books',
                 'due_date' => now()->addDays(10)->toDateString(),
             ])
-            ->assertUnprocessable();
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.amount.0', 'Our risk check has paused borrowing for now. Repaying on time raises your limit.');
 
         $this->assertSame('restricted', app(TrustService::class)->current($student)->tier);
+    }
+
+    public function test_a_lowered_limit_says_the_risk_check_set_it(): void
+    {
+        $this->fakeModel([20 => true, 100 => false]);
+        $student = $this->trustedStudent();
+
+        $this->withToken(JWTAuth::fromUser($student))
+            ->postJson(route('api.v1.loans.store'), [
+                'amount' => 50,
+                'due_date' => now()->addDays(10)->toDateString(),
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.amount.0', 'Our risk check limits you to loans up to $20 for now. Repaying on time raises it.');
     }
 
     public function test_the_model_can_never_raise_a_tier(): void

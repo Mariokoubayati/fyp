@@ -1,13 +1,13 @@
 # UniCircle: Full Test Plan
 
-**Version:** 2026-11-09 · **Covers:** PRs #1 to #6 (everything built so far)
+**Version:** 2026-11-24 · **Covers:** PRs #1 to #6 plus the fixes from the full test pass of 2026-11-24
 
 No test plan can prove software is 100% correct. This one makes sure that **every feature, every rule and every error case has been checked at least once, with evidence**, in three layers:
 
 | Layer | What it checks | How long | Who | When |
 |---|---|---|---|---|
-| **1. Automated tests** | Every API rule, permission and calculation (277 backend tests, 30 ML tests, app type-check and lint) | runs by itself | GitHub CI | Every pull request |
-| **2. End-to-end script** | All main flows over HTTP against your running server (98 checks) | ~1 minute | You, one command | After setup, after every merge, before a demo |
+| **1. Automated tests** | Every API rule, permission and calculation (288 backend tests, 30 ML tests, app type-check and lint) | runs by itself | GitHub CI | Every pull request |
+| **2. End-to-end script** | All main flows over HTTP against your running server (101 checks) | ~1 minute | You, one command | After setup, after every merge, before a demo |
 | **3. Manual phone checklist** | What only a person can see: screens, taps, keyboard, two phones talking, offline | ~3 hours per platform | You | Once on iPhone, once on Android, then the "smoke" subset after changes |
 
 If layer 1 or 2 fails, fix that first. There is no point testing screens on a broken server.
@@ -89,7 +89,7 @@ php artisan migrate:fresh --seed && php artisan db:seed --class=DemoSeeder
 ## 1. Layer 1: automated tests
 
 ```sh
-cd backend && php artisan test          # 277 tests
+cd backend && php artisan test          # 288 tests
 cd ml && python -m pytest -q            # 30 tests
 cd mobile && npm run typecheck && npx eslint .
 ```
@@ -100,14 +100,14 @@ On GitHub, every pull request runs all of this, with the backend tests on **both
 
 | Area | Test files (tests) |
 |---|---|
-| Sign-up, login, tokens, email verification | Register (9), Login (5), Logout (2), Refresh (5), VerifyEmail (5), ResendVerification (3), Unauthenticated API (2) |
+| Sign-up, login, tokens, email verification | Register (10), Login (5), Logout (2), Refresh (5), VerifyEmail (5), ResendVerification (3), Unauthenticated API (2) |
 | Profile, courses, search | CurrentUser (3), UpdateProfile (5), Course index (3), Enrollment (10), UserSearch (4), StudentProfile (3) |
 | Study groups | Store (5), Index (5), Show (3), Update (4), Destroy (3), Join (7), Leave (4), Recommended (4) |
-| Marketplace | Store (5), Index (5), Show (4), Update (6), Destroy (3), MarkSold (7), Rating (7) |
+| Marketplace | Store (5), Index (6), Show (4), Update (6), Destroy (3), MarkSold (7), Rating (7) |
 | Lending | Store (10), Index (4), Show (4), Accept (5), ConfirmHandover (5), ConfirmRepayment (7), Cancel (5), State machine (2), Due loans job (5) |
-| Trust score | Calculator (19), Service (4), Collusion attacks through the API (5), AI gate (7), MyTrust (2), UserTrust (3), Vouch (10), Recalculate (1), Verified listener (1) |
-| Recommender + home feed | RecommendationController (6) |
-| Messaging + notifications | Messaging (20), Loan notifications (3) |
+| Trust score | Calculator (19), Service (4), Collusion attacks through the API (5), AI gate (8), MyTrust (2), UserTrust (3), Vouch (10), Recalculate (1), Verified listener (1) |
+| Recommender + home feed | RecommendationController (7) |
+| Messaging + notifications | Messaging (24), Review reports command (3), Loan notifications (3) |
 | ML service | Features and rules parity (11), simulator (5), Flask API (5), recommender (9) |
 
 ---
@@ -121,7 +121,7 @@ cd backend
 php artisan app:e2e
 ```
 
-It signs in as A, B, C and U and runs 98 checks over HTTP: access and permissions, profile and courses, the whole study group flow, the whole marketplace flow, a full loan from request to repayment, trust and vouches, messaging with block and report, notifications, the home feed, token refresh and sign-out. It prints PASS/FAIL per check and ends with `All 98 checks passed.`
+It signs in as A, B, C and U and runs 101 checks over HTTP: access and permissions, profile and courses, the whole study group flow, the whole marketplace flow, a full loan from request to repayment, trust and vouches, messaging with block and report, notifications, the home feed, token refresh and sign-out. It prints PASS/FAIL per check and ends with `All 101 checks passed.`
 
 Against a deployed server: `php artisan app:e2e --base=https://your-domain/api/v1`.
 
@@ -295,12 +295,16 @@ Use two devices: A on the phone, B on the second phone or the browser.
 | MSG-16 | Unblock (until there is an unblock button, use the command below) | Messages work again | ☐ | ☐ |
 | MSG-17 | Restriction: A, B and C each report the same demo student X; then sign in as X and try to message someone new | X is refused ("cannot start new conversations…"); X can still reply in an existing chat | ☐ | ☐ |
 | MSG-18 | Check the database holds no readable messages | `SELECT body FROM messages LIMIT 3;` shows long `eyJpdi…` strings, not your text | ☐ | ☐ |
+| MSG-19 | Sign in as U (unverified), open any chat "…" → Report | Refused ("Your email address is not verified."); only verified students' reports count | ☐ | ☐ |
 
 ```sh
 # MSG-16: unblock (A unblocks everyone)
 php artisan tinker --execute 'App\Models\Block::where("blocker_id", App\Models\User::firstWhere("email","202300000@ua.edu.lb")->id)->delete();'
 # MSG-17: get a demo student X to report, and sign in as them (password: password)
 php artisan tinker --execute 'echo App\Models\User::where("email","not like","2023000%")->first()->email;'
+# MSG-17: see open reports, then lift X's restriction (marks their reports reviewed)
+php artisan reports:review
+php artisan reports:review X_EMAIL
 ```
 
 ### 3.9 Notifications (NOTIF)
@@ -328,6 +332,7 @@ php artisan tinker --execute 'echo App\Models\User::where("email","not like","20
 | ROB-08 | Phone in dark mode | All text still readable (the app stays light) | ☐ | ☐ |
 | ROB-09 | Smallest phone you can borrow (e.g. iPhone SE) | Buttons reachable; nothing hidden behind the keyboard or the notch | ☐ | ☐ |
 | ROB-10 | Tap a button many times quickly (Post listing, Fund loan, Send) | Only one item/action is created | ☐ | ☐ |
+| ROB-11 | Signed in, airplane mode, close the app fully and reopen it | "You are still signed in" with Try again and Sign out, never the sign-in screen; Try again after turning the network on opens Home | ☐ | ☐ |
 
 ---
 
@@ -371,7 +376,7 @@ Fix blockers and majors before the usability study. Retest the failed ID and its
 | Layer | Result | Date | By |
 |---|---|---|---|
 | 1. Automated (CI green on the last PR) | | | |
-| 2. `php artisan app:e2e` (98/98) | | | |
+| 2. `php artisan app:e2e` (101/101) | | | |
 | 3. Manual, iPhone (all IDs ticked) | | | |
 | 3. Manual, Android (all IDs ticked) | | | |
 | 4. Deployment checklist | | | |
@@ -386,3 +391,18 @@ Fix blockers and majors before the usability study. Retest the failed ID and its
 | The chat "…" menu (report, block) did nothing in the browser build | Minor | Replaced the system alert with an in-app sheet that works on every platform |
 | The app could not run in a browser at all (needed for the second test account) | Minor | Added Expo web support and a browser fallback for storing the login token |
 | Demo data priced notes at up to $33 | Cosmetic | Realistic price ranges per category |
+
+## 8. Bugs found in the full test pass of 2026-11-24 (fixed)
+
+| Bug | Severity | Fix |
+|---|---|---|
+| Three unverified throwaway accounts could report a student and stop them starting chats, permanently | Major | Only verified students can report, only their reports count, sign-ups limited to 10 a minute per address, `php artisan reports:review` lists and clears reports; 6 tests |
+| Home said "Picked for you…" while the AI service was down | Minor | The feed reports `rules` whenever a ranking fell back; 2 tests |
+| "Seen" only appeared after leaving and reopening a chat | Minor | Each poll returns `seen_up_to`, the chat marks older messages seen; 1 test |
+| Opening the app while the server was unreachable showed the sign-in screen | Minor | "You are still signed in" screen with Try again and Sign out (ROB-11) |
+| Any direct link opened Home on a fresh start | Minor | Screens mount only after the stored login is restored |
+| A report could attach a chat the reporter is not part of | Minor | The chat must be between the two students; 1 test |
+| `php artisan test` failed on a laptop whose `.env` turns the AI on (step 0.4) | Minor | `phpunit.xml` switches the AI off for tests |
+| AI-lowered limit was refused with "Your trust score is too low" | Cosmetic | Says the risk check set the limit; 1 test |
+| Searching `%` or `_` matched every listing | Cosmetic | Search treats them as plain characters (listings, courses, students); 1 test |
+| Demo data differed on every reset | Cosmetic | `DemoSeeder` is seeded: every reset gives the same students, scores and chats (A = 543, Basic, 3 chats) |

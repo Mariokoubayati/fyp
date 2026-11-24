@@ -2,6 +2,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 
 import * as authApi from '../api/auth';
 import { setUnauthorizedHandler } from '../api/client';
+import { getErrorMessage } from '../api/errors';
 import { AuthSession, User } from '../api/types';
 import { tokenStorage } from '../storage/tokenStorage';
 
@@ -9,6 +10,15 @@ interface AuthContextValue {
   user: User | null;
   /** True while the stored token is being restored on app start. */
   isLoading: boolean;
+  /**
+   * Set when a stored session exists but the server could not be reached (or failed) on app start.
+   * The student is still signed in; they only need to retry.
+   */
+  restoreError: string | null;
+  /** Try restoring the stored session again after a restoreError. */
+  retryRestore: () => void;
+  /** True while a retry is in progress. */
+  retrying: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (name: string, email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -21,6 +31,10 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [restoreError, setRestoreError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const [retrying, setRetrying] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -36,14 +50,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           if (active) {
             setUser(currentUser);
+            setRestoreError(null);
           }
         }
-      } catch {
-        // An invalid token is cleared by the API client; any other failure
-        // (e.g. offline) just leaves the user on the sign-in screen.
+      } catch (error) {
+        // An invalid token is cleared by the API client (sign-in screen). Any other failure
+        // (offline, server down) keeps the token and offers a retry instead of looking signed out.
+        const stillSignedIn = !!(await tokenStorage.get());
+
+        if (active) {
+          setRestoreError(stillSignedIn ? getErrorMessage(error) : null);
+        }
       } finally {
         if (active) {
           setIsLoading(false);
+          setRetrying(false);
         }
       }
     }
@@ -54,6 +75,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       active = false;
       setUnauthorizedHandler(null);
     };
+  }, [attempt]);
+
+  const retryRestore = useCallback(() => {
+    setRetrying(true);
+    setAttempt((n) => n + 1);
   }, []);
 
   const startSession = useCallback(async (session: AuthSession) => {
@@ -80,12 +106,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     await tokenStorage.clear();
+    setRestoreError(null);
     setUser(null);
   }, []);
 
   const value = useMemo(
-    () => ({ user, isLoading, signIn, signUp, signOut, updateUser: setUser }),
-    [user, isLoading, signIn, signUp, signOut],
+    () => ({ user, isLoading, restoreError, retryRestore, retrying, signIn, signUp, signOut, updateUser: setUser }),
+    [user, isLoading, restoreError, retryRestore, retrying, signIn, signUp, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

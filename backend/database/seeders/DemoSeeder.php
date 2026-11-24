@@ -71,6 +71,10 @@ class DemoSeeder extends Seeder
 
     public function run(TrustService $trust): void
     {
+        // Same seed, same campus: every reset gives the same students, scores and chats,
+        // so demos, the usability study and the test plan always start from the same data.
+        fake()->seed(2026);
+
         $this->call(CourseSeeder::class);
         $courses = Course::all();
 
@@ -135,7 +139,7 @@ class DemoSeeder extends Seeder
             ])->save();
 
             $own = $courses->filter(fn (Course $course): bool => in_array(substr($course->code, 0, 3), $majors[$major], true));
-            $picked = $own->random(min(4, $own->count()))->push($courses->firstWhere('code', 'ENG-101'));
+            $picked = $this->pickMany($own, min(4, $own->count()))->push($courses->firstWhere('code', 'ENG-101'));
             $student->courses()->syncWithoutDetaching($picked->modelKeys());
         });
     }
@@ -149,7 +153,7 @@ class DemoSeeder extends Seeder
     private function pastGroups(Collection $students, Collection $courses): void
     {
         foreach (range(1, 15) as $i) {
-            $course = $courses->random();
+            $course = $this->pick($courses);
             $enrolled = $students->filter(fn (User $s): bool => $s->courses->contains($course));
             if ($enrolled->count() < 2) {
                 continue;
@@ -157,12 +161,12 @@ class DemoSeeder extends Seeder
 
             $group = StudyGroup::factory()->past()->create([
                 'course_id' => $course->id,
-                'creator_id' => $enrolled->random()->id,
+                'creator_id' => $this->pick($enrolled)->id,
                 'title' => "{$course->name} review session",
                 'location' => fake()->randomElement(self::LOCATIONS),
                 'capacity' => 6,
             ]);
-            $group->members()->syncWithoutDetaching($enrolled->random(min(4, $enrolled->count()))->modelKeys());
+            $group->members()->syncWithoutDetaching($this->pickMany($enrolled, min(4, $enrolled->count()))->modelKeys());
         }
     }
 
@@ -175,7 +179,7 @@ class DemoSeeder extends Seeder
         $topics = ['Midterm prep', 'Problem set', 'Final exam review', 'Lab help', 'Weekly study session'];
 
         foreach (range(1, 25) as $i) {
-            $course = $courses->random();
+            $course = $this->pick($courses);
             $enrolled = $students->filter(fn (User $s): bool => $s->courses->contains($course));
             if ($enrolled->isEmpty()) {
                 continue;
@@ -183,13 +187,13 @@ class DemoSeeder extends Seeder
 
             $group = StudyGroup::factory()->create([
                 'course_id' => $course->id,
-                'creator_id' => $enrolled->random()->id,
+                'creator_id' => $this->pick($enrolled)->id,
                 'title' => fake()->randomElement($topics).": {$course->name}",
                 'location' => fake()->randomElement(self::LOCATIONS),
                 'starts_at' => now()->addDays(fake()->numberBetween(1, 14))->setTime(fake()->numberBetween(9, 19), 0),
                 'capacity' => fake()->numberBetween(4, 8),
             ]);
-            $group->members()->syncWithoutDetaching($enrolled->random(min(fake()->numberBetween(0, 3), $enrolled->count()))->modelKeys());
+            $group->members()->syncWithoutDetaching($this->pickMany($enrolled, min(fake()->numberBetween(0, 3), $enrolled->count()))->modelKeys());
         }
     }
 
@@ -203,7 +207,7 @@ class DemoSeeder extends Seeder
                 $listing = $this->listingFor($seller);
 
                 if (fake()->boolean(30)) {
-                    $buyer = $students->reject(fn (User $s): bool => $s->is($seller))->random();
+                    $buyer = $this->pick($students->reject(fn (User $s): bool => $s->is($seller)));
                     $listing->forceFill(['status' => ListingStatus::Sold, 'buyer_id' => $buyer->id, 'sold_at' => now()->subDays(fake()->numberBetween(1, 30))])->save();
                     $trust->record($seller, TrustEventType::SaleCompleted, $listing, counterparty: $buyer);
                     $trust->record($buyer, TrustEventType::PurchaseCompleted, $listing, counterparty: $seller);
@@ -219,7 +223,7 @@ class DemoSeeder extends Seeder
     private function listingFor(User $seller): Listing
     {
         $category = fake()->randomElement(['books', 'books', 'notes', 'notes', 'electronics', 'supplies', 'other']);
-        $course = in_array($category, ['books', 'notes'], true) ? $seller->courses->random() : null;
+        $course = in_array($category, ['books', 'notes'], true) ? $this->pick($seller->courses) : null;
         $title = $course
             ? sprintf(fake()->randomElement(self::LISTING_TITLES[$category]), $course->name)
             : fake()->randomElement(self::GENERAL_ITEMS[$category]);
@@ -243,7 +247,7 @@ class DemoSeeder extends Seeder
     private function loans(Collection $students, TrustService $trust): void
     {
         foreach (range(1, 30) as $i) {
-            [$borrower, $lender] = $students->random(2)->all();
+            [$borrower, $lender] = $this->pickMany($students, 2)->all();
             $start = now()->subDays(fake()->numberBetween(20, 80));
             $late = fake()->boolean(15);
 
@@ -266,7 +270,7 @@ class DemoSeeder extends Seeder
 
         foreach (range(1, 6) as $i) {
             Loan::factory()->create([
-                'borrower_id' => $students->random()->id,
+                'borrower_id' => $this->pick($students)->id,
                 'amount' => fake()->randomElement([5, 10, 15]),
                 'purpose' => fake()->randomElement(['Lunch', 'Printing', 'Transport']),
                 'due_date' => now()->addDays(fake()->numberBetween(7, 20))->toDateString(),
@@ -287,7 +291,7 @@ class DemoSeeder extends Seeder
             [['them', 'Thanks for the loan, I will pay you back on Friday.']],
         ];
 
-        foreach ($others->random(count($scripts))->values() as $i => $other) {
+        foreach ($this->pickMany($others, count($scripts))->values() as $i => $other) {
             $conversation = Conversation::between($demo, $other);
             $sentAt = now()->subHours(count($scripts[$i]) * 3 + $i * 24);
 
@@ -312,12 +316,26 @@ class DemoSeeder extends Seeder
     private function vouches(Collection $students, TrustService $trust): void
     {
         foreach (range(1, 25) as $i) {
-            [$voucher, $vouchee] = $students->random(2)->all();
+            [$voucher, $vouchee] = $this->pickMany($students, 2)->all();
             if (Vouch::where(['voucher_id' => $voucher->id, 'vouchee_id' => $vouchee->id])->exists()) {
                 continue;
             }
             Vouch::forceCreate(['voucher_id' => $voucher->id, 'vouchee_id' => $vouchee->id]);
             $trust->record($vouchee, TrustEventType::VouchReceived, $voucher, counterparty: $voucher);
         }
+    }
+
+    /**
+     * Collection::random() uses PHP's secure randomizer, which cannot be seeded. Faker can.
+     */
+    private function pick(Collection $items): mixed
+    {
+        return fake()->randomElement($items->values()->all());
+    }
+
+    private function pickMany(Collection $items, int $count): Collection
+    {
+        // Same collection class back (an Eloquent collection keeps modelKeys()).
+        return $items::make(fake()->randomElements($items->values()->all(), $count));
     }
 }

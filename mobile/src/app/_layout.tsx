@@ -2,10 +2,21 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
 import { SplashScreenController } from '@/components/SplashScreenController';
+import { StartupError } from '@/components/StartupError';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 
 function RootStack() {
-  const { user } = useAuth();
+  const { user, isLoading, restoreError } = useAuth();
+
+  // Mount the screens only once we know whether the student is signed in. Mounting earlier
+  // made the guard redirect every opened link (and future notification taps) to Home.
+  if (isLoading) {
+    return null;
+  }
+
+  if (restoreError) {
+    return <StartupError message={restoreError} />;
+  }
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

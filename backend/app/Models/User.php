@@ -58,13 +58,15 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
     }
 
     /**
-     * Unreviewed reports from this many different students stop this student from starting new chats.
+     * Unreviewed reports from this many different verified students stop this student from starting new chats.
+     * Unverified accounts never count, so throwaway sign-ups cannot silence anyone.
      */
     public function isChatRestricted(): bool
     {
         return UserReport::query()
             ->where('reported_id', $this->id)
             ->whereNull('reviewed_at')
+            ->whereHas('reporter', fn ($reporter) => $reporter->whereNotNull('email_verified_at'))
             ->distinct()
             ->count('reporter_id') >= config('messaging.reports_before_restriction');
     }

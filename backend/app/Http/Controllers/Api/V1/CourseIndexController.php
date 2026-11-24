@@ -19,7 +19,7 @@ class CourseIndexController extends Controller
 
         $courses = Course::query()
             ->when($search !== '', fn ($query) => $query->where(function ($query) use ($search): void {
-                $query->where('code', 'like', "%{$search}%")->orWhere('name', 'like', "%{$search}%");
+                $query->whereContains('code', $search)->orWhereContains('name', $search);
             }))
             ->orderBy('code')
             ->paginate(20)

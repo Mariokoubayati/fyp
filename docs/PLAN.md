@@ -22,8 +22,8 @@ Status legend: ✅ done · 🟡 in progress · ⬜ not started · 🔵 stretch
 | Rule-based trust score (events, tiers, nightly recalc, history) | ✅ | Anti-collusion added (PR #2) |
 | Vouches + public student profile | ✅ | |
 | Mobile app, 5 tabs (Expo Router) | ✅ | |
-| Backend tests | ✅ | 277 passing on MySQL 8 and SQLite + 30 ML tests, CI on every PR |
-| Test plan + end-to-end script | ✅ | PR #6: `docs/TEST-PLAN.md` (iPhone + Android checklist), `php artisan app:e2e` (98 checks), browser build for the second account; 3 real bugs fixed |
+| Backend tests | ✅ | 288 passing on MySQL 8 and SQLite + 30 ML tests, CI on every PR |
+| Test plan + end-to-end script | ✅ | PR #6: `docs/TEST-PLAN.md` (iPhone + Android checklist), `php artisan app:e2e` (101 checks), browser build for the second account; 3 real bugs fixed |
 | Messaging + notifications | ✅ | PR #5: chats, block/report, notifications list, header badges |
 | Home feed + recommender | ✅ | PR #4: groups and listings picked for you |
 | Demo data | ✅ | PR #4: `DemoSeeder` (40 students, groups, listings, loans) for demos and the SUS study |

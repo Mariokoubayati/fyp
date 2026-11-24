@@ -114,4 +114,21 @@ class RegisterControllerTest extends TestCase
 
         Notification::assertSentTo(User::where('email', 'sara@ua.edu.lb')->firstOrFail(), VerifyEmail::class);
     }
+
+    public function test_sign_ups_from_one_address_are_rate_limited(): void
+    {
+        foreach (range(1, 10) as $i) {
+            $this->postJson(route('api.v1.auth.register'), [
+                'name' => "Student {$i}",
+                'email' => "20249900{$i}@ua.edu.lb",
+                'password' => 'password123',
+            ])->assertCreated();
+        }
+
+        $this->postJson(route('api.v1.auth.register'), [
+            'name' => 'One too many',
+            'email' => '202499999@ua.edu.lb',
+            'password' => 'password123',
+        ])->assertTooManyRequests();
+    }
 }

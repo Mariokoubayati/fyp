@@ -263,6 +263,7 @@ class EndToEndCheck extends Command
         $this->check('Recipient reads the message', fn () => $this->as('B')->get("/conversations/{$conversationId}/messages"), 200, fn (Response $r) => collect($r->json('data'))->contains('body', $body));
         $this->check('Unread badge clears after reading', fn () => $this->as('B')->get('/me/badges'), 200, fn (Response $r) => $r->json('data.messages') === 0);
         $this->check('Sender sees it as read', fn () => $this->as('A')->get("/conversations/{$conversationId}/messages"), 200, fn (Response $r) => collect($r->json('data'))->firstWhere('id', $messageId)['read_at'] !== null);
+        $this->check('Polling tells the sender how far the other student read', fn () => $this->as('A')->get("/conversations/{$conversationId}/messages", ['after' => $messageId]), 200, fn (Response $r) => (int) $r->json('meta.seen_up_to') >= $messageId);
         $this->as('B')->post("/conversations/{$conversationId}/messages", ['body' => "E2E reply {$this->run}"]);
         $this->check('Polling returns only newer messages', fn () => $this->as('A')->get("/conversations/{$conversationId}/messages", ['after' => $messageId]), 200, fn (Response $r) => count($r->json('data')) === 1);
         $this->check('Inbox lists the chat', fn () => $this->as('A')->get('/conversations'), 200, fn (Response $r) => collect($r->json('data'))->contains('id', $conversationId));
@@ -276,6 +277,8 @@ class EndToEndCheck extends Command
         $this->check('Report with an unknown reason is rejected', fn () => $this->as('A')->post('/users/'.$this->id('C').'/report', ['reason' => 'boring']), 422);
         $this->check('Report a student', fn () => $this->as('A')->post('/users/'.$this->id('C').'/report', ['reason' => 'spam']), 204);
         $this->check('Students cannot report themselves', fn () => $this->as('A')->post('/users/'.$this->id('A').'/report', ['reason' => 'spam']), 403);
+        $this->check('Unverified students cannot report', fn () => $this->as('U')->post('/users/'.$this->id('C').'/report', ['reason' => 'spam']), 403);
+        $this->check('A report cannot attach someone else\'s chat', fn () => $this->as('C')->post('/users/'.$this->id('B').'/report', ['reason' => 'spam', 'conversation_id' => $conversationId]), 422);
     }
 
     private function notifications(): void

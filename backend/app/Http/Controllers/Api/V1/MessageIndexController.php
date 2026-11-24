@@ -21,6 +21,16 @@ class MessageIndexController extends Controller
 
         $request->validate(['after' => ['nullable', 'integer', 'min:0']]);
 
-        return MessageResource::collection($messaging->read($conversation, $request->user(), $request->integer('after') ?: null));
+        $messages = $messaging->read($conversation, $request->user(), $request->integer('after') ?: null);
+
+        // Lets a polling chat mark older messages "Seen" without reloading them.
+        $seenUpTo = $conversation->messages()
+            ->where('sender_id', $request->user()->id)
+            ->whereNotNull('read_at')
+            ->max('id');
+
+        return MessageResource::collection($messages)->additional([
+            'meta' => ['seen_up_to' => $seenUpTo === null ? null : (int) $seenUpTo],
+        ]);
     }
 }

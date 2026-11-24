@@ -33,6 +33,11 @@
         <env name="SESSION_DRIVER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
+        <!-- Tests never call the real AI service, whatever the local .env says. -->
+        <env name="TRUST_MODEL_ENABLED" value="false"/>
+        <env name="TRUST_MODEL_TOKEN" value=""/>
+        <env name="RECOMMENDER_ENABLED" value="false"/>
+        <env name="RECOMMENDER_TOKEN" value=""/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
     </php>
 </phpunit>

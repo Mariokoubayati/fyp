@@ -55,7 +55,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->name('api.v1.')->group(function (): void {
     Route::prefix('auth')->name('auth.')->group(function (): void {
-        Route::post('register', RegisterController::class)->name('register');
+        Route::post('register', RegisterController::class)->middleware('throttle:register')->name('register');
         Route::post('login', LoginController::class)->middleware('throttle:login')->name('login');
 
         Route::get('email/verify/{id}/{hash}', VerifyEmailController::class)
@@ -94,7 +94,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
 
         Route::put('users/{user}/block', BlockStoreController::class)->name('users.block.store');
         Route::delete('users/{user}/block', BlockDestroyController::class)->name('users.block.destroy');
-        Route::post('users/{user}/report', UserReportStoreController::class)->middleware('throttle:10,1')->name('users.report.store');
+        Route::post('users/{user}/report', UserReportStoreController::class)->middleware(['verified', 'throttle:10,1'])->name('users.report.store');
 
         Route::get('me/badges', BadgeCountController::class)->name('me.badges');
         Route::get('notifications', NotificationIndexController::class)->name('notifications.index');
