@@ -17,6 +17,11 @@ class RecommendationService
 {
     private const MAX_CANDIDATES = 200;
 
+    /**
+     * True once any ranking in this request fell back to the SQL ordering.
+     */
+    private bool $fellBackToRules = false;
+
     public function __construct(private readonly RecommenderClient $client) {}
 
     /**
@@ -60,6 +65,8 @@ class RecommendationService
             ])->values()->all(),
             now()->getTimestamp(),
         );
+
+        $this->fellBackToRules = $this->fellBackToRules || $ranked === null;
 
         $ordered = $ranked === null
             ? $this->sqlGroupOrder($candidates, $courseIds, $user)
@@ -120,6 +127,8 @@ class RecommendationService
             now()->getTimestamp(),
         );
 
+        $this->fellBackToRules = $this->fellBackToRules || $ranked === null;
+
         // Fallback: listings for my courses first, then the newest.
         $ordered = $ranked === null
             ? $candidates->sortBy(fn (Listing $listing): int => in_array($listing->course_id, $courseIds, true) ? 0 : 1)->values()
@@ -131,9 +140,12 @@ class RecommendationService
     /**
      * Whether the last ranking came from the model (for the API response).
      */
+    /**
+     * Whether the model actually ranked everything returned so far, not just whether it is switched on.
+     */
     public function usesModel(): bool
     {
-        return $this->client->enabled();
+        return $this->client->enabled() && ! $this->fellBackToRules;
     }
 
     /**

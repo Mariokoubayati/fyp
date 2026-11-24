@@ -138,6 +138,25 @@ class MessagingTest extends TestCase
             ->assertJsonPath('data.0.body', 'Two');
     }
 
+    public function test_polling_tells_the_sender_how_far_the_other_student_has_read(): void
+    {
+        $id = $this->conversationId();
+        $this->send($this->alice, $id, 'One');
+        $last = $this->send($this->alice, $id, 'Two')->json('data.id');
+
+        $this->as($this->alice)->getJson(route('api.v1.conversations.messages.index', [$id, 'after' => $last]))
+            ->assertOk()
+            ->assertJsonCount(0, 'data')
+            ->assertJsonPath('meta.seen_up_to', null);
+
+        $this->as($this->bob)->getJson(route('api.v1.conversations.messages.index', $id))->assertOk();
+
+        $this->as($this->alice)->getJson(route('api.v1.conversations.messages.index', [$id, 'after' => $last]))
+            ->assertOk()
+            ->assertJsonCount(0, 'data')
+            ->assertJsonPath('meta.seen_up_to', $last);
+    }
+
     public function test_outsiders_cannot_read_or_write(): void
     {
         $id = $this->conversationId();
@@ -263,6 +282,40 @@ class MessagingTest extends TestCase
         UserReport::factory()->count(2)->create(['reported_id' => $this->alice->id]);
 
         $this->start($this->alice, $this->bob)->assertCreated();
+    }
+
+    public function test_unverified_students_cannot_report(): void
+    {
+        $this->as(User::factory()->unverified()->create())
+            ->postJson(route('api.v1.users.report.store', $this->alice), ['reason' => 'spam'])
+            ->assertForbidden();
+
+        $this->assertSame(0, UserReport::count());
+    }
+
+    public function test_reports_from_unverified_accounts_never_restrict_anyone(): void
+    {
+        foreach (User::factory()->unverified()->count(3)->create() as $reporter) {
+            UserReport::factory()->create(['reporter_id' => $reporter->id, 'reported_id' => $this->alice->id]);
+        }
+
+        $this->start($this->alice, $this->bob)->assertCreated();
+    }
+
+    public function test_a_report_can_only_attach_a_conversation_between_the_two_students(): void
+    {
+        $carol = User::factory()->create();
+        $private = $this->start($this->alice, $carol)->json('data.id');
+        $shared = $this->conversationId();
+
+        $this->as($this->bob)
+            ->postJson(route('api.v1.users.report.store', $this->alice), ['reason' => 'spam', 'conversation_id' => $private])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('conversation_id');
+
+        $this->as($this->bob)
+            ->postJson(route('api.v1.users.report.store', $this->alice), ['reason' => 'spam', 'conversation_id' => $shared])
+            ->assertNoContent();
     }
 
     // --- notifications list ---

@@ -7,6 +7,7 @@ use App\Models\Listing;
 use App\Models\StudyGroup;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Testing\TestResponse;
@@ -142,10 +143,20 @@ class RecommendationControllerTest extends TestCase
         $mine = StudyGroup::factory()->create(['course_id' => $this->course->id]);
         StudyGroup::factory()->create();
 
-        $this->feed()->assertOk()->assertJsonCount(1, 'data.groups')->assertJsonPath('data.groups.0.id', $mine->id);
-        $this->feed()->assertOk();
+        $this->feed()->assertOk()->assertJsonCount(1, 'data.groups')->assertJsonPath('data.groups.0.id', $mine->id)
+            ->assertJsonPath('data.source', 'rules');
+        $this->feed()->assertOk()->assertJsonPath('data.source', 'rules');
 
         Http::assertSentCount(1);
+    }
+
+    public function test_an_unreachable_service_reports_the_rules_as_the_source(): void
+    {
+        $this->enableModel();
+        Http::fake(fn () => throw new ConnectionException('refused'));
+        StudyGroup::factory()->create(['course_id' => $this->course->id]);
+
+        $this->feed()->assertOk()->assertJsonPath('data.source', 'rules');
     }
 
     public function test_the_study_group_tab_uses_the_same_ranking(): void

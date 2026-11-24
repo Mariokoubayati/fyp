@@ -31,7 +31,7 @@ class ListingIndexController extends Controller
             ->when($request->integer('course_id'), fn ($query, int $courseId) => $query->where('course_id', $courseId))
             ->when($request->filled('max_price'), fn ($query) => $query->where('price', '<=', $request->float('max_price')))
             ->when($search !== '', fn ($query) => $query->where(function ($query) use ($search): void {
-                $query->where('title', 'like', "%{$search}%")->orWhere('description', 'like', "%{$search}%");
+                $query->whereContains('title', $search)->orWhereContains('description', $search);
             }))
             ->latest()
             ->paginate(20)

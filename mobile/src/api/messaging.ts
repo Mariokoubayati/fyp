@@ -52,11 +52,18 @@ export async function startConversation(userId: number): Promise<Conversation> {
 }
 
 /** The latest messages, or only those newer than `after` (used for polling). */
-export async function fetchMessages(conversationId: number, after?: number): Promise<ChatMessage[]> {
-  const { data } = await api.get<ApiEnvelope<ChatMessage[]>>(`/conversations/${conversationId}/messages`, {
-    params: after ? { after } : undefined,
-  });
-  return data.data;
+export interface MessagePage {
+  messages: ChatMessage[];
+  /** Id of the newest of my messages the other student has read, or null. */
+  seenUpTo: number | null;
+}
+
+export async function fetchMessages(conversationId: number, after?: number): Promise<MessagePage> {
+  const { data } = await api.get<ApiEnvelope<ChatMessage[]> & { meta?: { seen_up_to?: number | null } }>(
+    `/conversations/${conversationId}/messages`,
+    { params: after ? { after } : undefined },
+  );
+  return { messages: data.data, seenUpTo: data.meta?.seen_up_to ?? null };
 }
 
 export async function sendMessage(conversationId: number, body: string): Promise<ChatMessage> {

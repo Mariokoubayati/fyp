@@ -59,6 +59,19 @@ class ListingIndexControllerTest extends TestCase
             ->assertJsonCount(2, 'data');
     }
 
+    public function test_search_treats_percent_and_underscore_as_plain_characters(): void
+    {
+        Listing::factory()->create(['title' => '100% cotton hoodie', 'description' => null]);
+        Listing::factory()->create(['title' => 'Desk lamp', 'description' => null]);
+        Listing::factory()->create(['title' => 'Notes_v2', 'description' => null]);
+
+        $token = JWTAuth::fromUser(User::factory()->create());
+
+        $this->withToken($token)->getJson(route('api.v1.listings.index', ['search' => '%']))->assertOk()->assertJsonCount(1, 'data');
+        $this->withToken($token)->getJson(route('api.v1.listings.index', ['search' => '_']))->assertOk()->assertJsonCount(1, 'data');
+        $this->withToken($token)->getJson(route('api.v1.listings.index', ['search' => 'lamp']))->assertOk()->assertJsonCount(1, 'data');
+    }
+
     public function test_filters_by_category_course_and_max_price(): void
     {
         $course = Course::factory()->create();

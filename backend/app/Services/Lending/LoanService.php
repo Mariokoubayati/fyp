@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Notifications\LoanAcceptedNotification;
 use App\Notifications\LoanDueSoonNotification;
 use App\Notifications\LoanOverdueNotification;
+use App\Services\Trust\TrustScoreCalculator;
 use App\Services\Trust\TrustService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -33,18 +34,24 @@ class LoanService
      */
     public function request(User $borrower, array $data): Loan
     {
-        $maxLoan = $this->trust->current($borrower)->maxLoan;
-        $limit = min($maxLoan, config('lending.max_amount'));
+        $trust = $this->trust->current($borrower);
+        $limit = min($trust->maxLoan, config('lending.max_amount'));
+        // When the AI risk check lowered the limit, say so: the score itself may be fine.
+        $loweredByModel = in_array(TrustScoreCalculator::FLAG_MODEL_RISK, $trust->flags, true);
 
         if ($limit <= 0) {
             throw ValidationException::withMessages([
-                'amount' => 'Your trust score is too low to borrow right now.',
+                'amount' => $loweredByModel
+                    ? 'Our risk check has paused borrowing for now. Repaying on time raises your limit.'
+                    : 'Your trust score is too low to borrow right now.',
             ]);
         }
 
         if ((float) $data['amount'] > $limit) {
             throw ValidationException::withMessages([
-                'amount' => "Your trust tier allows loans up to \${$limit}.",
+                'amount' => $loweredByModel
+                    ? "Our risk check limits you to loans up to \${$limit} for now. Repaying on time raises it."
+                    : "Your trust tier allows loans up to \${$limit}.",
             ]);
         }
 
