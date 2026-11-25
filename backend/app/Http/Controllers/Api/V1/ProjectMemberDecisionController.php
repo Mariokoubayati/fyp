@@ -9,6 +9,7 @@ use App\Models\Project;
 use App\Models\User;
 use App\Notifications\ProjectRequestAnsweredNotification;
 use App\Notifications\ProjectTeamFullNotification;
+use App\Services\Badges\BadgeService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,7 +22,7 @@ class ProjectMemberDecisionController extends Controller
     /**
      * Accept or decline a pending join request (owner only). Accepting fails with 409 when the team is full.
      */
-    public function __invoke(Request $request, Project $project, User $user): ProjectResource
+    public function __invoke(Request $request, Project $project, User $user, BadgeService $badges): ProjectResource
     {
         Gate::authorize('update', $project);
 
@@ -56,6 +57,10 @@ class ProjectMemberDecisionController extends Controller
 
         $project->loadMissing('owner');
         $user->notify(new ProjectRequestAnsweredNotification($project, $status));
+
+        if ($status === ProjectMemberStatus::Accepted) {
+            $badges->check($user);
+        }
         Notification::send($turnedAway, new ProjectTeamFullNotification($project));
 
         return new ProjectResource($project->load(['course', 'owner', 'members', 'requests'])->loadMembership($request->user()));

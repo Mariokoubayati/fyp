@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\TrustEventType;
+use App\Services\Badges\BadgeService;
 use Database\Factories\TrustEventFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,6 +16,21 @@ class TrustEvent extends Model
 {
     /** @use HasFactory<TrustEventFactory> */
     use HasFactory;
+
+    /**
+     * A new trust event can complete a badge for the student or for the other side
+     * (a repaid loan can earn the lender "Helping hand").
+     */
+    protected static function booted(): void
+    {
+        static::created(function (TrustEvent $event): void {
+            $badges = app(BadgeService::class);
+
+            foreach (array_filter([$event->user, $event->counterparty]) as $student) {
+                $badges->check($student);
+            }
+        });
+    }
 
     /**
      * @return BelongsTo<User, $this>

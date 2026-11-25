@@ -161,6 +161,61 @@ export interface StudentProfile extends Student {
   trust: { score: number; tier: TrustTier; max_loan: number };
   vouch_count: number;
   vouched_by_me: boolean;
+  badges: EarnedBadge[];
+}
+
+export type BadgeKey =
+  | 'first_sale'
+  | 'top_seller'
+  | 'reliable_borrower'
+  | 'helping_hand'
+  | 'study_buddy'
+  | 'event_goer'
+  | 'event_host'
+  | 'team_player'
+  | 'well_vouched';
+
+export interface EarnedBadge {
+  key: BadgeKey;
+  title: string;
+  description: string;
+  /** An Ionicons name. */
+  icon: string;
+  earned_at: string | null;
+}
+
+export interface BadgeProgress extends EarnedBadge {
+  progress: number;
+  goal: number;
+}
+
+export interface ActivityMonth {
+  month: string;
+  label: string;
+  earned: number;
+  spent: number;
+  marketplace: number;
+  loans: number;
+  groups: number;
+  events: number;
+}
+
+export interface Activity {
+  marketplace: { sold: number; earned: number; bought: number; spent: number; for_sale: number };
+  lending: {
+    borrowed: number;
+    borrowed_amount: number;
+    lent: number;
+    lent_amount: number;
+    repaid_on_time: number;
+    repaid_late: number;
+    open: number;
+  };
+  groups: { joined: number; started: number; upcoming: number };
+  events: { went: number; upcoming: number; hosted: number };
+  projects: { owned: number; joined: number };
+  months: ActivityMonth[];
+  badges: BadgeProgress[];
 }
 
 export interface CampusEvent {

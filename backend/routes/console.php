@@ -11,3 +11,4 @@ Artisan::command('inspire', function () {
 Schedule::command('trust:recalculate')->dailyAt('03:00');
 Schedule::command('loans:process-due')->dailyAt('02:00');
 Schedule::command('events:remind')->hourly();
+Schedule::command('badges:award')->hourly();

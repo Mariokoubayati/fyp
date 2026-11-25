@@ -67,6 +67,7 @@ export default function Profile() {
       ) : null}
 
       <View style={styles.actions}>
+        <Button title="My activity and badges" onPress={() => router.push('/activity')} />
         <Button title="Edit profile" variant="secondary" onPress={() => router.push('/edit-profile')} />
         <Button title="My courses" variant="secondary" onPress={() => router.push('/courses')} />
         <Button title="Sign out" variant="secondary" onPress={signOut} />

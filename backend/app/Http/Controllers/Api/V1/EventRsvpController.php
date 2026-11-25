@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\EventResource;
 use App\Models\Event;
+use App\Services\Badges\BadgeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -14,7 +15,7 @@ class EventRsvpController extends Controller
      * Say you are going (idempotent). Fails with 409 when the event is full or has started.
      * Going to events does not change the trust score.
      */
-    public function __invoke(Request $request, Event $event): EventResource
+    public function __invoke(Request $request, Event $event, BadgeService $badges): EventResource
     {
         $user = $request->user();
 
@@ -30,6 +31,8 @@ class EventRsvpController extends Controller
 
             $locked->attendees()->attach($user);
         });
+
+        $badges->check($event->creator);
 
         return new EventResource($event->load(['course', 'creator'])->loadAttendance($user));
     }

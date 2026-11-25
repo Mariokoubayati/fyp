@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Http\Controllers\Api\V1;
 
+use App\Enums\Badge;
 use App\Models\User;
+use App\Models\UserBadge;
 use App\Models\Vouch;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
@@ -43,5 +45,19 @@ class StudentProfileControllerTest extends TestCase
         $this->withToken(JWTAuth::fromUser(User::factory()->create()))
             ->getJson(route('api.v1.users.show', 9999))
             ->assertNotFound();
+    }
+
+    public function test_shows_the_badges_the_student_earned_and_only_those(): void
+    {
+        $student = User::factory()->create();
+        UserBadge::create(['user_id' => $student->id, 'badge' => Badge::StudyBuddy, 'earned_at' => now()]);
+
+        $this->withToken(JWTAuth::fromUser(User::factory()->create()))
+            ->getJson(route('api.v1.users.show', $student))
+            ->assertOk()
+            ->assertJsonCount(1, 'data.badges')
+            ->assertJsonPath('data.badges.0.key', 'study_buddy')
+            ->assertJsonPath('data.badges.0.title', 'Study buddy')
+            ->assertJsonPath('data.badges.0.icon', 'book');
     }
 }
