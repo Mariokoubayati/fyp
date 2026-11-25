@@ -28,8 +28,10 @@ function RootStack() {
         <Stack.Screen name="study-group/[id]" options={{ headerShown: true, title: 'Study group' }} />
         <Stack.Screen name="event/new" options={{ headerShown: true, title: 'Post an event' }} />
         <Stack.Screen name="event/[id]" options={{ headerShown: true, title: 'Event' }} />
+        <Stack.Screen name="event/edit/[id]" options={{ headerShown: true, title: 'Edit event' }} />
         <Stack.Screen name="project/new" options={{ headerShown: true, title: 'Post a project' }} />
         <Stack.Screen name="project/[id]" options={{ headerShown: true, title: 'Project' }} />
+        <Stack.Screen name="project/edit/[id]" options={{ headerShown: true, title: 'Edit project' }} />
         <Stack.Screen name="student/[id]" options={{ headerShown: true, title: 'Student' }} />
         <Stack.Screen name="loan/new" options={{ headerShown: true, title: 'Ask for a loan' }} />
         <Stack.Screen name="loan/[id]" options={{ headerShown: true, title: 'Loan' }} />

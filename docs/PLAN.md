@@ -87,6 +87,9 @@ In the supervisor response, events, analytics and badges are labeled stretch (hi
 | 2026-11-24 | Going to events and joining projects never changes the trust score (the score keeps its three signals) |
 | 2026-11-24 | Event and project recommendations follow the same pattern: model in Flask, SQL ordering as fallback and baseline; they run on their own random stream so the group and listing results do not change |
 | 2026-11-24 | SUS questionnaire in Google Forms; facilitator plays the second student in the browser |
+| 2026-11-25 | Moving an event's start moves its end too (same length) |
+| 2026-11-25 | When a project team fills, the waiting requests are removed (not declined) and told, so they can ask again if a spot opens |
+| 2026-11-25 | Owners can edit events and projects in the app |
 
 ## 5. What Mario owns
 

@@ -29,6 +29,12 @@ export async function createEvent(payload: NewEvent): Promise<CampusEvent> {
   return data.data;
 }
 
+export async function updateEvent(id: number, payload: Partial<NewEvent>): Promise<CampusEvent> {
+  const { data } = await api.patch<ApiEnvelope<CampusEvent>>(`/events/${id}`, payload);
+
+  return data.data;
+}
+
 export async function rsvpEvent(id: number): Promise<CampusEvent> {
   const { data } = await api.put<ApiEnvelope<CampusEvent>>(`/events/${id}/rsvp`);
 

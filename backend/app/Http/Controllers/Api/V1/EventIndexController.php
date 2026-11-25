@@ -8,6 +8,7 @@ use App\Http\Resources\Api\V1\EventResource;
 use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Validation\Rule;
 
 class EventIndexController extends Controller
 {
@@ -19,7 +20,7 @@ class EventIndexController extends Controller
     {
         $request->validate([
             'filter' => ['nullable', 'in:all,going,mine'],
-            'tag' => ['nullable', 'string'],
+            'tag' => ['nullable', Rule::enum(CampusTag::class)],
             'search' => ['nullable', 'string', 'max:100'],
         ]);
 

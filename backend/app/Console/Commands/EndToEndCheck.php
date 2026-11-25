@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Console\Command;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Throwable;
@@ -163,6 +164,7 @@ class EndToEndCheck extends Command
             'title' => "E2E meetup {$this->run}",
             'location' => 'Main auditorium',
             'starts_at' => now()->addDays(2)->setTime(18, 0)->toIso8601String(),
+            'ends_at' => now()->addDays(2)->setTime(20, 0)->toIso8601String(),
             'capacity' => 2,
             'tags' => ['tech', 'social'],
         ]);
@@ -173,6 +175,8 @@ class EndToEndCheck extends Command
         $this->check('Topic filter finds the event', fn () => $this->as('B')->get('/events', ['tag' => 'tech', 'search' => "E2E meetup {$this->run}"]), 200, fn (Response $r) => collect($r->json('data'))->contains('id', $eventId));
         $this->check('Another student says they are going', fn () => $this->as('B')->put("/events/{$eventId}/rsvp"), 200, fn (Response $r) => $r->json('data.attendees_count') === 2);
         $this->check('A full event refuses one more', fn () => $this->as('C')->put("/events/{$eventId}/rsvp"), 409);
+        $this->check('An unknown topic filter is refused', fn () => $this->as('B')->get('/events', ['tag' => 'nonsense']), 422);
+        $this->check('Moving the start moves the end (same length)', fn () => $this->as('A')->patch("/events/{$eventId}", ['starts_at' => now()->addDays(3)->setTime(18, 0)->toIso8601String()]), 200, fn (Response $r) => Carbon::parse($r->json('data.starts_at'))->diffInMinutes(Carbon::parse($r->json('data.ends_at'))) == 120);
         $this->check('Only the creator can edit the event', fn () => $this->as('C')->patch("/events/{$eventId}", ['title' => 'Hijacked']), 403);
         $this->check('Event shows under Going', fn () => $this->as('B')->get('/events', ['filter' => 'going']), 200, fn (Response $r) => collect($r->json('data'))->contains('id', $eventId));
         $this->check('Student changes their mind', fn () => $this->as('B')->delete("/events/{$eventId}/rsvp"), 204);
@@ -196,13 +200,16 @@ class EndToEndCheck extends Command
         $this->check('A student asks to join', fn () => $this->as('B')->put("/projects/{$projectId}/request", ['message' => 'I can help.']), 200, fn (Response $r) => $r->json('data.my_status') === 'pending');
         $this->check('Owner sees the request', fn () => $this->as('A')->get("/projects/{$projectId}"), 200, fn (Response $r) => collect($r->json('data.requests'))->contains('id', $this->id('B')));
         $this->check('Others do not see requests', fn () => $this->as('C')->get("/projects/{$projectId}"), 200, fn (Response $r) => $r->json('data.requests') === null);
+        $this->check('A second student asks to join', fn () => $this->as('C')->put("/projects/{$projectId}/request"), 200);
         $this->check('Only the owner answers requests', fn () => $this->as('C')->put("/projects/{$projectId}/members/{$this->id('B')}", ['status' => 'accepted']), 403);
         $this->check('Owner accepts the request', fn () => $this->as('A')->put("/projects/{$projectId}/members/{$this->id('B')}", ['status' => 'accepted']), 200, fn (Response $r) => $r->json('data.is_full') === true);
+        $this->check('Filling the team tells the student still waiting', fn () => $this->as('C')->get('/notifications'), 200, fn (Response $r) => collect($r->json('data'))->contains(fn (array $n) => $n['type'] === 'project_team_full' && ($n['data']['project_id'] ?? null) === $projectId));
         $this->check('A full team refuses new requests', fn () => $this->as('C')->put("/projects/{$projectId}/request"), 409);
         $this->check('The new member is told', fn () => $this->as('B')->get('/notifications'), 200, fn (Response $r) => collect($r->json('data'))->contains(fn (array $n) => $n['type'] === 'project_request_accepted' && ($n['data']['project_id'] ?? null) === $projectId));
         $this->check('Project shows under Joined', fn () => $this->as('B')->get('/projects', ['filter' => 'joined']), 200, fn (Response $r) => collect($r->json('data'))->contains('id', $projectId));
         $this->check('Projects "For you" works', fn () => $this->as('C')->get('/projects/recommended'), 200);
         $this->check('Owner deletes the project', fn () => $this->as('A')->delete("/projects/{$projectId}"), 204);
+        $this->check('The member is told the project was deleted', fn () => $this->as('B')->get('/notifications'), 200, fn (Response $r) => collect($r->json('data'))->contains(fn (array $n) => $n['type'] === 'project_deleted' && ($n['data']['title'] ?? null) === "E2E project {$this->run}"));
     }
 
     private function marketplace(): void

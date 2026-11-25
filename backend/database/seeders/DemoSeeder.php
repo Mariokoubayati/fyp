@@ -22,6 +22,7 @@ use App\Models\Vouch;
 use App\Notifications\NewMessageNotification;
 use App\Services\Trust\TrustService;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 /**
@@ -244,7 +245,7 @@ class DemoSeeder extends Seeder
                 'creator_id' => $this->pick($enrolled)->id,
                 'title' => fake()->randomElement($topics).": {$course->name}",
                 'location' => fake()->randomElement(self::LOCATIONS),
-                'starts_at' => now()->addDays(fake()->numberBetween(1, 14))->setTime(fake()->numberBetween(9, 19), 0),
+                'starts_at' => $this->campusTime(fake()->numberBetween(1, 14), fake()->numberBetween(9, 19)),
                 'capacity' => fake()->numberBetween(4, 8),
             ]);
             $group->members()->syncWithoutDetaching($this->pickMany($enrolled, min(fake()->numberBetween(0, 3), $enrolled->count()))->modelKeys());
@@ -424,7 +425,7 @@ class DemoSeeder extends Seeder
 
         foreach (self::EVENTS as $tag => $events) {
             foreach ($events as [$title, $location, $hour]) {
-                $startsAt = now()->addDays(fake()->numberBetween(2, 20))->setTime($hour, 0);
+                $startsAt = $this->campusTime(fake()->numberBetween(2, 20), $hour);
                 $event = Event::factory()->create([
                     'creator_id' => $this->pick($others)->id,
                     'course_id' => $tag === 'academic' ? $courses->firstWhere('code', fake()->randomElement(['MTH-101', 'STA-201']))?->id : null,
@@ -446,7 +447,7 @@ class DemoSeeder extends Seeder
                 'creator_id' => $this->pick($others)->id,
                 'title' => $title,
                 'location' => 'Student lounge',
-                'starts_at' => now()->subDays(fake()->numberBetween(7, 40))->setTime(18, 0),
+                'starts_at' => $this->campusTime(-fake()->numberBetween(7, 40), 18),
                 'ends_at' => null,
                 'tags' => [$tag],
             ]);
@@ -483,6 +484,14 @@ class DemoSeeder extends Seeder
                 $project->people()->syncWithoutDetaching([$waiting->id => ['status' => ProjectMemberStatus::Pending->value, 'message' => 'I would love to help.']]);
             }
         }
+    }
+
+    /**
+     * A clock time on campus (Beirut), stored in UTC like every other date, so "2 PM" shows as 2 PM on a Lebanese phone.
+     */
+    private function campusTime(int $days, int $hour): Carbon
+    {
+        return now('Asia/Beirut')->addDays($days)->setTime($hour, 0)->utc();
     }
 
     private function pick(Collection $items): mixed

@@ -17,7 +17,7 @@ class RemindUpcomingEvents extends Command
     /**
      * @var string
      */
-    protected $description = 'Remind everyone going to an event that starts within the next 24 hours (once per event)';
+    protected $description = 'Remind everyone going to an event that starts within the next 24 hours (once per event and start time, so a rescheduled event is reminded again)';
 
     public function handle(): int
     {
@@ -32,6 +32,7 @@ class RemindUpcomingEvents extends Command
                     $alreadyReminded = $attendee->notifications()
                         ->where('type', 'event_starting_soon')
                         ->where('data->event_id', $event->id)
+                        ->where('data->starts_at', $event->starts_at->toIso8601String())
                         ->exists();
 
                     if (! $alreadyReminded) {

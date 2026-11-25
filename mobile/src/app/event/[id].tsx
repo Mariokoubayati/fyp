@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { getErrorMessage } from '@/api/errors';
@@ -21,11 +21,14 @@ export default function EventDetail() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchEvent(eventId)
-      .then(setEvent)
-      .catch((e) => setError(getErrorMessage(e)));
-  }, [eventId]);
+  // Reload on focus, so coming back from "Edit" shows the changes.
+  useFocusEffect(
+    useCallback(() => {
+      fetchEvent(eventId)
+        .then(setEvent)
+        .catch((e) => setError(getErrorMessage(e)));
+    }, [eventId]),
+  );
 
   const run = useCallback(async (action: () => Promise<void>) => {
     setBusy(true);
@@ -105,7 +108,12 @@ export default function EventDetail() {
 
       <View style={styles.actions}>
         {event.is_creator ? (
-          <Button title="Cancel this event" variant="danger" onPress={handleCancel} loading={busy} />
+          <>
+            {!event.has_started ? (
+              <Button title="Edit event" variant="secondary" onPress={() => router.push(`/event/edit/${event.id}`)} disabled={busy} />
+            ) : null}
+            <Button title="Cancel this event" variant="danger" onPress={handleCancel} loading={busy} />
+          </>
         ) : event.has_started ? (
           <Button title="This event has started" disabled onPress={() => undefined} />
         ) : event.is_going ? (

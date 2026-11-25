@@ -33,6 +33,10 @@ function describe(n: AppNotification): { title: string; body: string } {
       return { title: `You are on the team for ${n.data.title ?? 'a project'}`, body: `${n.data.other?.name ?? 'The owner'} accepted your request.` };
     case 'project_request_declined':
       return { title: `Your request to join ${n.data.title ?? 'a project'} was declined`, body: 'Have a look at other projects that need your skills.' };
+    case 'project_team_full':
+      return { title: `The team for ${n.data.title ?? 'a project'} is full`, body: 'Your request was removed. You can ask again if a spot opens.' };
+    case 'project_deleted':
+      return { title: `${n.data.title ?? 'A project'} was deleted`, body: `${n.data.other?.name ?? 'The owner'} removed this project.` };
   }
 }
 

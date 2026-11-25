@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import { ColorValue } from 'react-native';
+import { ColorValue, useWindowDimensions } from 'react-native';
 import { ComponentProps } from 'react';
 
 import { HeaderActions } from '@/components/HeaderActions';
@@ -15,11 +15,15 @@ function tabIcon(focused: IconName, idle: IconName) {
 }
 
 export default function TabsLayout() {
+  // Five labels do not fit at the default size on the smallest phones (iPhone SE, 320 pt): "Marketplace" gets cut.
+  const { width } = useWindowDimensions();
+
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
+        tabBarLabelStyle: width < 360 ? { fontSize: 9 } : undefined,
       }}
     >
       <Tabs.Screen

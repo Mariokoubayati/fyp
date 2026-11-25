@@ -29,7 +29,9 @@ export type NotificationType =
   | 'event_cancelled'
   | 'project_join_requested'
   | 'project_request_accepted'
-  | 'project_request_declined';
+  | 'project_request_declined'
+  | 'project_team_full'
+  | 'project_deleted';
 
 export interface AppNotification {
   id: string;
