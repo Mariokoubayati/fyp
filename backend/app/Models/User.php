@@ -13,7 +13,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 
-#[Fillable(['name', 'email', 'password', 'major', 'study_year', 'bio'])]
+#[Fillable(['name', 'email', 'password', 'major', 'study_year', 'bio', 'interests', 'skills'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements JWTSubject, MustVerifyEmail
 {
@@ -108,6 +108,8 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'study_year' => 'integer',
+            'interests' => 'array',
+            'skills' => 'array',
             'trust_score' => 'integer',
         ];
     }

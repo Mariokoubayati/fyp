@@ -51,6 +51,8 @@ class EndToEndCheck extends Command
             'Access' => fn () => $this->access(),
             'Profile and courses' => fn () => $this->profileAndCourses(),
             'Study groups' => fn () => $this->studyGroups(),
+            'Events' => fn () => $this->events(),
+            'Projects' => fn () => $this->projects(),
             'Marketplace' => fn () => $this->marketplace(),
             'Lending' => fn () => $this->lending(),
             'Trust and vouches' => fn () => $this->trustAndVouches(),
@@ -114,6 +116,12 @@ class EndToEndCheck extends Command
         $this->check('Year of study outside 1-6 is rejected', fn () => $this->as('A')->patch('/me', ['study_year' => 9]), 422);
         $this->as('A')->patch('/me', ['bio' => $original]);
 
+        $profile = $this->as('A')->get('/me')->json('data');
+        $this->check('Interests and skills can be set', fn () => $this->as('A')->patch('/me', ['interests' => ['tech', 'arts'], 'skills' => ['Laravel', 'laravel', 'Figma']]), 200, fn (Response $r) => $r->json('data.skills') === ['Laravel', 'Figma']);
+        $this->check('An unknown interest is rejected', fn () => $this->as('A')->patch('/me', ['interests' => ['gaming']]), 422);
+        $this->check('Others see interests on the public profile', fn () => $this->as('B')->get("/users/{$this->id('A')}"), 200, fn (Response $r) => $r->json('data.interests') === ['tech', 'arts']);
+        $this->as('A')->patch('/me', ['interests' => $profile['interests'] ?? [], 'skills' => $profile['skills'] ?? []]);
+
         $courses = $this->as('A')->get('/courses')->json('data');
         $this->record(is_array($courses) && count($courses) > 0, 'Course catalogue lists courses');
         $mine = collect($this->as('A')->get('/me/courses')->json('data'))->pluck('id')->all();
@@ -147,6 +155,54 @@ class EndToEndCheck extends Command
         $this->check('Member leaves', fn () => $this->as('B')->delete("/study-groups/{$groupId}/membership"), [200, 204]);
         $this->check('Creator edits the title', fn () => $this->as('A')->patch("/study-groups/{$groupId}", ['title' => "E2E group {$this->run} (edited)"]), 200);
         $this->check('Creator cancels the group', fn () => $this->as('A')->delete("/study-groups/{$groupId}"), [200, 204]);
+    }
+
+    private function events(): void
+    {
+        $created = $this->as('A')->post('/events', [
+            'title' => "E2E meetup {$this->run}",
+            'location' => 'Main auditorium',
+            'starts_at' => now()->addDays(2)->setTime(18, 0)->toIso8601String(),
+            'capacity' => 2,
+            'tags' => ['tech', 'social'],
+        ]);
+        $this->record($created->status() === 201 && $created->json('data.is_going') === true, 'Post an event (creator is going)', "HTTP {$created->status()}");
+        $eventId = (int) $created->json('data.id');
+
+        $this->check('An event without topics is rejected', fn () => $this->as('A')->post('/events', ['title' => 'No tags', 'location' => 'Here', 'starts_at' => now()->addDay()->toIso8601String(), 'tags' => []]), 422);
+        $this->check('Topic filter finds the event', fn () => $this->as('B')->get('/events', ['tag' => 'tech', 'search' => "E2E meetup {$this->run}"]), 200, fn (Response $r) => collect($r->json('data'))->contains('id', $eventId));
+        $this->check('Another student says they are going', fn () => $this->as('B')->put("/events/{$eventId}/rsvp"), 200, fn (Response $r) => $r->json('data.attendees_count') === 2);
+        $this->check('A full event refuses one more', fn () => $this->as('C')->put("/events/{$eventId}/rsvp"), 409);
+        $this->check('Only the creator can edit the event', fn () => $this->as('C')->patch("/events/{$eventId}", ['title' => 'Hijacked']), 403);
+        $this->check('Event shows under Going', fn () => $this->as('B')->get('/events', ['filter' => 'going']), 200, fn (Response $r) => collect($r->json('data'))->contains('id', $eventId));
+        $this->check('Student changes their mind', fn () => $this->as('B')->delete("/events/{$eventId}/rsvp"), 204);
+        $this->check('Events "For you" works', fn () => $this->as('A')->get('/events/recommended'), 200);
+        $this->check('Creator cancels the event', fn () => $this->as('A')->delete("/events/{$eventId}"), 204);
+    }
+
+    private function projects(): void
+    {
+        $created = $this->as('A')->post('/projects', [
+            'title' => "E2E project {$this->run}",
+            'description' => 'Checking the project hub end to end.',
+            'skills_needed' => ['Laravel', 'UI design'],
+            'tags' => ['tech'],
+            'team_size' => 2,
+        ]);
+        $this->record($created->status() === 201 && $created->json('data.members_count') === 1, 'Post a project (owner is on the team)', "HTTP {$created->status()}");
+        $projectId = (int) $created->json('data.id');
+
+        $this->check('The owner cannot ask to join their own project', fn () => $this->as('A')->put("/projects/{$projectId}/request"), 422);
+        $this->check('A student asks to join', fn () => $this->as('B')->put("/projects/{$projectId}/request", ['message' => 'I can help.']), 200, fn (Response $r) => $r->json('data.my_status') === 'pending');
+        $this->check('Owner sees the request', fn () => $this->as('A')->get("/projects/{$projectId}"), 200, fn (Response $r) => collect($r->json('data.requests'))->contains('id', $this->id('B')));
+        $this->check('Others do not see requests', fn () => $this->as('C')->get("/projects/{$projectId}"), 200, fn (Response $r) => $r->json('data.requests') === null);
+        $this->check('Only the owner answers requests', fn () => $this->as('C')->put("/projects/{$projectId}/members/{$this->id('B')}", ['status' => 'accepted']), 403);
+        $this->check('Owner accepts the request', fn () => $this->as('A')->put("/projects/{$projectId}/members/{$this->id('B')}", ['status' => 'accepted']), 200, fn (Response $r) => $r->json('data.is_full') === true);
+        $this->check('A full team refuses new requests', fn () => $this->as('C')->put("/projects/{$projectId}/request"), 409);
+        $this->check('The new member is told', fn () => $this->as('B')->get('/notifications'), 200, fn (Response $r) => collect($r->json('data'))->contains(fn (array $n) => $n['type'] === 'project_request_accepted' && ($n['data']['project_id'] ?? null) === $projectId));
+        $this->check('Project shows under Joined', fn () => $this->as('B')->get('/projects', ['filter' => 'joined']), 200, fn (Response $r) => collect($r->json('data'))->contains('id', $projectId));
+        $this->check('Projects "For you" works', fn () => $this->as('C')->get('/projects/recommended'), 200);
+        $this->check('Owner deletes the project', fn () => $this->as('A')->delete("/projects/{$projectId}"), 204);
     }
 
     private function marketplace(): void
@@ -293,6 +349,7 @@ class EndToEndCheck extends Command
     {
         $feed = $this->as('A')->get('/recommendations');
         $this->record($feed->ok() && is_array($feed->json('data.groups')) && is_array($feed->json('data.listings')), 'Home feed returns groups and listings', 'source: '.$feed->json('data.source'));
+        $this->record(is_array($feed->json('data.events')) && is_array($feed->json('data.projects')), 'Home feed returns events and projects');
         $this->record(collect($feed->json('data.listings'))->every(fn (array $l) => ($l['seller']['id'] ?? null) !== $this->id('A')), 'Feed never suggests your own listings');
         $this->check('Groups tab "For you" works', fn () => $this->as('A')->get('/study-groups/recommended'), 200);
     }

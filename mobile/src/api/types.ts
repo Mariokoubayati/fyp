@@ -6,9 +6,14 @@ export interface User {
   major: string | null;
   study_year: number | null;
   bio: string | null;
+  interests: CampusTag[];
+  skills: string[];
   trust_score: number;
   created_at: string;
 }
+
+/** Topics shared by interests, events and projects (labels in lib/tags.ts). */
+export type CampusTag = 'academic' | 'tech' | 'sports' | 'social' | 'culture' | 'arts' | 'career' | 'volunteering';
 
 export interface Course {
   id: number;
@@ -21,6 +26,8 @@ export interface ProfileUpdate {
   major?: string | null;
   study_year?: number | null;
   bio?: string | null;
+  interests?: CampusTag[];
+  skills?: string[];
 }
 
 /** Laravel paginator wrapped by an Eloquent resource collection. */
@@ -107,6 +114,8 @@ export interface Student {
   name: string;
   major: string | null;
   study_year: number | null;
+  interests?: CampusTag[];
+  skills?: string[];
 }
 
 export type LoanStatus = 'requested' | 'accepted' | 'active' | 'repaid' | 'overdue' | 'defaulted' | 'cancelled';
@@ -152,4 +161,62 @@ export interface StudentProfile extends Student {
   trust: { score: number; tier: TrustTier; max_loan: number };
   vouch_count: number;
   vouched_by_me: boolean;
+}
+
+export interface CampusEvent {
+  id: number;
+  title: string;
+  description: string | null;
+  location: string;
+  starts_at: string;
+  ends_at: string | null;
+  capacity: number | null;
+  tags: CampusTag[];
+  attendees_count: number;
+  is_full: boolean;
+  is_going: boolean;
+  is_creator: boolean;
+  has_started: boolean;
+  course?: Course | null;
+  creator?: { id: number; name: string };
+}
+
+export interface NewEvent {
+  title: string;
+  description: string | null;
+  location: string;
+  starts_at: string;
+  ends_at: string | null;
+  capacity: number | null;
+  tags: CampusTag[];
+}
+
+export type ProjectMemberStatus = 'pending' | 'accepted' | 'declined';
+
+export interface Project {
+  id: number;
+  title: string;
+  description: string;
+  skills_needed: string[];
+  tags: CampusTag[];
+  team_size: number;
+  members_count: number;
+  is_open: boolean;
+  is_full: boolean;
+  my_status: ProjectMemberStatus | null;
+  is_owner: boolean;
+  created_at: string;
+  course?: Course | null;
+  owner?: { id: number; name: string };
+  members?: { id: number; name: string; major: string | null }[];
+  /** Only sent to the owner. */
+  requests?: { id: number; name: string; major: string | null; skills: string[]; message: string | null }[];
+}
+
+export interface NewProject {
+  title: string;
+  description: string;
+  skills_needed: string[];
+  tags: CampusTag[];
+  team_size: number;
 }

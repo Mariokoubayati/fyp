@@ -6,6 +6,7 @@ import { getErrorMessage } from '@/api/errors';
 import { AppNotification, fetchNotifications, markNotificationsRead } from '@/api/messaging';
 import { EmptyState } from '@/components/EmptyState';
 import { Loading } from '@/components/Loading';
+import { formatDateTime } from '@/lib/format';
 import { colors, radius, spacing, typography } from '@/theme';
 
 function describe(n: AppNotification): { title: string; body: string } {
@@ -19,6 +20,19 @@ function describe(n: AppNotification): { title: string; body: string } {
       return { title: `${amount} is due soon`, body: n.data.due_date ? `Due on ${n.data.due_date}` : '' };
     case 'loan_overdue':
       return { title: `${amount} is overdue`, body: 'Repay as soon as you can. Late loans lower your trust score.' };
+    case 'event_starting_soon':
+      return {
+        title: `${n.data.title ?? 'An event'} is coming up`,
+        body: [n.data.starts_at ? formatDateTime(n.data.starts_at) : null, n.data.location].filter(Boolean).join(' · '),
+      };
+    case 'event_cancelled':
+      return { title: `${n.data.title ?? 'An event'} was cancelled`, body: n.data.starts_at ? `It was planned for ${formatDateTime(n.data.starts_at)}` : '' };
+    case 'project_join_requested':
+      return { title: `${n.data.other?.name ?? 'A student'} wants to join ${n.data.title ?? 'your project'}`, body: 'Open the project to accept or decline.' };
+    case 'project_request_accepted':
+      return { title: `You are on the team for ${n.data.title ?? 'a project'}`, body: `${n.data.other?.name ?? 'The owner'} accepted your request.` };
+    case 'project_request_declined':
+      return { title: `Your request to join ${n.data.title ?? 'a project'} was declined`, body: 'Have a look at other projects that need your skills.' };
   }
 }
 
@@ -30,6 +44,10 @@ function open(n: AppNotification) {
     });
   } else if (n.data.loan_id) {
     router.push(`/loan/${n.data.loan_id}`);
+  } else if (n.data.event_id) {
+    router.push(`/event/${n.data.event_id}`);
+  } else if (n.data.project_id) {
+    router.push(`/project/${n.data.project_id}`);
   }
 }
 
@@ -66,7 +84,7 @@ export default function Notifications() {
       keyExtractor={(n) => n.id}
       ListHeaderComponent={error ? <Text style={styles.error}>{error}</Text> : null}
       ListEmptyComponent={
-        <EmptyState icon="notifications-outline" title="Nothing new" message="Messages and loan updates will show up here." />
+        <EmptyState icon="notifications-outline" title="Nothing new" message="Messages, loan updates, event reminders and project requests will show up here." />
       }
       renderItem={({ item }) => {
         const { title, body } = describe(item);

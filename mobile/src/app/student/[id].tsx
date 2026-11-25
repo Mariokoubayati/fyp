@@ -9,6 +9,7 @@ import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Loading } from '@/components/Loading';
 import { MessageButton } from '@/components/MessageButton';
+import { TagList } from '@/components/TagList';
 import { Screen } from '@/components/Screen';
 import { useAuth } from '@/context/AuthContext';
 import { TIER_LABELS } from '@/lib/loans';
@@ -64,6 +65,7 @@ export default function StudentScreen() {
         <Text style={typography.title}>{student.name}</Text>
         {details ? <Text style={typography.caption}>{details}</Text> : null}
         {student.bio ? <Text style={typography.body}>{student.bio}</Text> : null}
+        <TagList tags={student.interests} words={student.skills} />
         <Text style={styles.trust}>
           Trust {student.trust.score} · {TIER_LABELS[student.trust.tier]}
         </Text>

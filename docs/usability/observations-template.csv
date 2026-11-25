@@ -1,0 +1,3 @@
+participant,task,result,seconds,errors,notes
+P1,T1,success,48,0,
+P1,T2,help,131,2,"looked under Home first, did not see the Campus switcher"

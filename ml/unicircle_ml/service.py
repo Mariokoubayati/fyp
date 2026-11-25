@@ -5,7 +5,9 @@
 GET  /health               -> {"status": "ok", "model_version": ..., "recommender_version": ...}
 POST /trust/assess         -> default risk for one student at one or more loan amounts
 POST /recommend/groups     -> open study groups ranked for one student
-POST /recommend/listings   -> available listings ranked for one student (formats in recommend.py)
+POST /recommend/listings   -> available listings ranked for one student
+POST /recommend/events     -> upcoming events ranked for one student
+POST /recommend/projects   -> open projects ranked for one student (formats in recommend.py)
 
 Request:
     {"history": {...shared history format...}, "amounts": [20, 100]}
@@ -27,7 +29,7 @@ from flask import Flask, abort, jsonify, request
 
 from .features import extract, vector
 from .history import History
-from .recommend import group_features, listing_features, rank
+from .recommend import event_features, group_features, listing_features, project_features, rank
 
 MODELS = Path(__file__).resolve().parent.parent / "models"
 DEFAULT_MODEL = MODELS / "trust_model.joblib"
@@ -108,6 +110,27 @@ def create_app(model_path: Path | str | None = None, token: str | None = None, r
             return jsonify(error=f"Invalid listing: {exc}"), 422
         ranked = rank(recommender["listings"], recommender["listing_features"], rows, [l["id"] for l in candidates])
         return jsonify(recommender_version=recommender["version"], ranked=ranked)
+
+    def rank_each(kind: str, features):
+        parsed = recommendation_request()
+        if parsed is None:
+            return jsonify(error=f"Send a user object and at most {MAX_CANDIDATES} candidates."), 422
+        user, candidates, now = parsed
+        try:
+            rows = [features(user, item, now) for item in candidates]
+            ids = [item["id"] for item in candidates]
+        except (KeyError, TypeError, ValueError, AttributeError) as exc:
+            return jsonify(error=f"Invalid {kind[:-1]}: {exc}"), 422
+        ranked = rank(recommender[kind], recommender[f"{kind[:-1]}_features"], rows, ids)
+        return jsonify(recommender_version=recommender["version"], ranked=ranked)
+
+    @app.post("/recommend/events")
+    def recommend_events():
+        return rank_each("events", event_features)
+
+    @app.post("/recommend/projects")
+    def recommend_projects():
+        return rank_each("projects", project_features)
 
     return app
 

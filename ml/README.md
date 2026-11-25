@@ -38,16 +38,16 @@ Optional shared secret: set `ML_SERVICE_TOKEN` here and the same value as `TRUST
 
 ```sh
 python -m unicircle_ml.train        # trust model    -> reports/RESULTS.md
-python -m unicircle_ml.rec_train    # recommender    -> reports/RECOMMENDER.md (about 2 minutes)
+python -m unicircle_ml.rec_train    # recommender    -> reports/RECOMMENDER.md (about 2.5 minutes)
 ```
 
 These regenerate the synthetic data, retrain, and rewrite `models/` and `reports/` (tables in [`RESULTS.md`](reports/RESULTS.md) and [`RECOMMENDER.md`](reports/RECOMMENDER.md), plots as PNG). Same seeds give the same numbers.
 
 ## Recommender
 
-Laravel sends the student's profile (courses, major, year, past study partners, hours of past groups, past purchases) and the candidates (open groups with their members, available listings). Python computes the features and ranks them with two small logistic regressions, one for groups and one for listings. If the service is off or down, Laravel falls back to the SQL ordering: groups in your courses by number of classmates, listings for your courses first, then the newest.
+Laravel sends the student's profile (courses, major, year, past study partners, hours of past groups, past purchases) and the candidates (open groups with their members, available listings). Python computes the features and ranks them with four small logistic regressions: groups, listings, events and projects. For events and projects Laravel also sends the student's interests and skills, the students they met in groups, events and teams, and the topics and hours of events they went to. If the service is off or down, Laravel falls back to the SQL ordering: groups in your courses by number of classmates; listings for your courses first, then the newest; events matching your interests, then your courses, then the soonest; projects needing your skills, then matching your interests, then your courses, then the newest.
 
-The evaluation simulates a campus where students pick groups and items for hidden reasons (friendships, preferred time of day, interests, price sensitivity). The model only sees their traces. Every real choice after day 90 is ranked against everything open at that moment, and we check where the chosen item landed (hit@k, MRR), plus precision@5 and recall@5 at day 90.
+The evaluation simulates a campus where students pick groups, items, events and projects for hidden reasons (friendships, preferred time of day, tastes per topic, real skills, price sensitivity). Students only partly fill in their profile, as real ones do. The model only sees their traces. Every real choice after day 90 is ranked against everything open at that moment, and we check where the chosen item landed (hit@k, MRR), plus precision@5 and recall@5 at day 90.
 
 ## Tests
 
@@ -64,8 +64,8 @@ python -m pytest -q
 | `unicircle_ml/rules.py` | Python port of the backend's rule-based score (the baseline) |
 | `unicircle_ml/simulate.py` | Synthetic campus lending world with injected bad actors |
 | `unicircle_ml/train.py` | Training, baselines, evaluation, plots |
-| `unicircle_ml/recommend.py` | Recommender features (groups, listings with TF-IDF) and ranking |
-| `unicircle_ml/rec_simulate.py` | Synthetic campus for the recommender (hidden friendships, interests) |
+| `unicircle_ml/recommend.py` | Recommender features (groups, listings with TF-IDF, events, projects) and ranking |
+| `unicircle_ml/rec_simulate.py` | Synthetic campus for the recommender (hidden friendships, interests; events and projects on their own random stream) |
 | `unicircle_ml/rec_train.py` | Recommender training and evaluation against the SQL ordering |
 | `unicircle_ml/service.py` | Flask API |
 

@@ -3,7 +3,17 @@ import pytest
 
 from unicircle_ml import rec_train
 from unicircle_ml.rec_simulate import Campus, RecConfig
-from unicircle_ml.recommend import DAY, GROUP_FEATURES, LISTING_FEATURES, group_features, listing_features
+from unicircle_ml.recommend import (
+    DAY,
+    EVENT_FEATURES,
+    GROUP_FEATURES,
+    LISTING_FEATURES,
+    PROJECT_FEATURES,
+    event_features,
+    group_features,
+    listing_features,
+    project_features,
+)
 from unicircle_ml.service import create_app
 
 NOW = 100 * DAY
@@ -89,6 +99,65 @@ def test_same_seed_same_campus():
     assert a.joins == b.joins and a.purchases == b.purchases
 
 
+def hub_user(**extra) -> dict:
+    return {"id": 1, "major": "CS", "interests": ["tech"], "skills": ["Laravel"], "course_ids": [3],
+            "co_members": {"17": 2}, "past_event_tags": ["tech", "tech", "career"], "past_event_count": 2,
+            "past_event_hours": [18], **extra}
+
+
+def event(eid: int, tags: list[str], attendees: list[dict], course: int | None = None, capacity: int | None = None, hour: int = 18) -> dict:
+    return {"id": eid, "tags": tags, "course_id": course, "starts_at": NOW + 3 * DAY + hour * 3600,
+            "capacity": capacity, "attendees": attendees}
+
+
+def project(pid: int, skills: list[str], tags: list[str], owner: int = 99, members: list[int] | None = None) -> dict:
+    return {"id": pid, "owner_id": owner, "owner_major": "CS", "tags": tags, "skills_needed": skills,
+            "course_id": None, "team_size": 4, "member_ids": members or [owner], "created_at": NOW - DAY}
+
+
+def test_event_features():
+    row = event_features(hub_user(), event(1, ["tech", "arts"], [{"id": 17, "major": "CS"}, {"id": 40, "major": "Design"}], capacity=4), NOW)
+    assert set(row) == set(EVENT_FEATURES)
+    assert row["interest_overlap"] == 0.5
+    assert row["tag_affinity"] == 0.5  # "tech" twice in 2 past events, over 2 tags
+    assert row["co_members_going"] == 2 and row["same_major_share"] == 0.5
+    assert row["fill_ratio"] == 0.5 and row["hour_distance"] == 0 and row["no_profile_interests"] == 0
+
+
+def test_event_features_without_a_profile_or_history():
+    row = event_features({"id": 1}, event(1, ["sports"], []), NOW)
+    assert row["no_profile_interests"] == 1 and row["interest_overlap"] == 0 and row["tag_affinity"] == 0
+    assert row["hour_distance"] == 6 and row["fill_ratio"] == 0
+
+
+def test_project_features_match_skills_without_case():
+    row = project_features(hub_user(), project(1, ["laravel", "UI design"], ["tech"], owner=17, members=[17, 5]), NOW)
+    assert set(row) == set(PROJECT_FEATURES)
+    assert row["skill_match"] == 0.5 and row["interest_overlap"] == 1
+    assert row["owner_is_co_member"] == 1 and row["co_members_in_team"] == 2
+    assert row["open_spots"] == 2 and row["same_major_owner"] == 1 and row["no_profile_skills"] == 0
+
+
+def test_small_campus_trains_events_and_projects():
+    campus = Campus(RecConfig(seed=5, students=200, days=60, cutoff_day=45)).run()
+    rng = np.random.default_rng(0)
+    rec_train.training_rows(campus, rng)
+    eX, ey, pX, py = rec_train.hub_training_rows(campus, rng)
+    assert ey.sum() > 0 and (ey == 0).sum() > 0 and pX.shape[1] == len(PROJECT_FEATURES)
+
+    results = rec_train.evaluate_hub(campus, rec_train.fit(eX, ey), rec_train.fit(pX, py))
+    assert results["events_model"]["decisions"] > 0
+    assert 0 <= results["projects_model"]["mrr"] <= 1
+
+
+def test_same_seed_same_events_and_projects():
+    campus = Campus(RecConfig(seed=9, students=100, days=30)).run()
+    first_joins, first_purchases = list(campus.joins), list(campus.purchases)
+    assert campus.rsvps
+    again = Campus(RecConfig(seed=9, students=100, days=30)).run()
+    assert again.joins == first_joins and again.purchases == first_purchases and again.rsvps == campus.rsvps
+
+
 # --- service ---
 
 
@@ -130,3 +199,29 @@ def test_invalid_recommendation_requests_return_422(client):
     assert client.post("/recommend/groups", json={"candidates": []}).status_code == 422
     assert client.post("/recommend/groups", json={"user": user(), "candidates": [{"id": 1}]}).status_code == 422
     assert client.post("/recommend/listings", json={"user": user(), "candidates": [{}] * 501}).status_code == 422
+
+
+def test_events_matching_my_interests_and_friends_rank_first(client):
+    body = {"now": NOW, "user": hub_user(), "candidates": [
+        event(1, ["sports"], [{"id": 40, "major": "Design"}]),
+        event(2, ["tech"], [{"id": 17, "major": "CS"}]),
+    ]}
+    response = client.post("/recommend/events", json=body)
+    assert response.status_code == 200
+    assert [r["id"] for r in response.get_json()["ranked"]] == [2, 1]
+
+
+def test_projects_needing_my_skills_rank_first(client):
+    body = {"now": NOW, "user": hub_user(), "candidates": [
+        project(1, ["Marketing"], ["career"]),
+        project(2, ["Laravel", "SQL"], ["tech"]),
+    ]}
+    response = client.post("/recommend/projects", json=body)
+    assert response.status_code == 200
+    assert [r["id"] for r in response.get_json()["ranked"]] == [2, 1]
+
+
+def test_invalid_event_and_project_requests_return_422(client):
+    assert client.post("/recommend/events", json={"user": {}, "candidates": [{"id": 1}]}).status_code == 422
+    assert client.post("/recommend/projects", json={"user": {}, "candidates": [{"tags": []}]}).status_code == 422
+    assert client.post("/recommend/events", json={"user": "x", "candidates": []}).status_code == 422

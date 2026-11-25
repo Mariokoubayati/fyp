@@ -10,6 +10,14 @@ use App\Http\Controllers\Api\V1\CurrentUserController;
 use App\Http\Controllers\Api\V1\EnrollmentDestroyController;
 use App\Http\Controllers\Api\V1\EnrollmentIndexController;
 use App\Http\Controllers\Api\V1\EnrollmentStoreController;
+use App\Http\Controllers\Api\V1\EventCancelRsvpController;
+use App\Http\Controllers\Api\V1\EventDestroyController;
+use App\Http\Controllers\Api\V1\EventIndexController;
+use App\Http\Controllers\Api\V1\EventRecommendedController;
+use App\Http\Controllers\Api\V1\EventRsvpController;
+use App\Http\Controllers\Api\V1\EventShowController;
+use App\Http\Controllers\Api\V1\EventStoreController;
+use App\Http\Controllers\Api\V1\EventUpdateController;
 use App\Http\Controllers\Api\V1\ListingDestroyController;
 use App\Http\Controllers\Api\V1\ListingIndexController;
 use App\Http\Controllers\Api\V1\ListingMarkSoldController;
@@ -31,6 +39,15 @@ use App\Http\Controllers\Api\V1\MessageStoreController;
 use App\Http\Controllers\Api\V1\MyTrustController;
 use App\Http\Controllers\Api\V1\NotificationIndexController;
 use App\Http\Controllers\Api\V1\NotificationReadController;
+use App\Http\Controllers\Api\V1\ProjectDestroyController;
+use App\Http\Controllers\Api\V1\ProjectIndexController;
+use App\Http\Controllers\Api\V1\ProjectJoinRequestController;
+use App\Http\Controllers\Api\V1\ProjectLeaveRequestController;
+use App\Http\Controllers\Api\V1\ProjectMemberDecisionController;
+use App\Http\Controllers\Api\V1\ProjectRecommendedController;
+use App\Http\Controllers\Api\V1\ProjectShowController;
+use App\Http\Controllers\Api\V1\ProjectStoreController;
+use App\Http\Controllers\Api\V1\ProjectUpdateController;
 use App\Http\Controllers\Api\V1\RecommendationController;
 use App\Http\Controllers\Api\V1\RefreshTokenController;
 use App\Http\Controllers\Api\V1\RegisterController;
@@ -129,6 +146,35 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::post('{listing}/rating', ListingRatingStoreController::class)->name('rating.store');
 
             Route::post('/', ListingStoreController::class)->middleware('verified')->name('store');
+        });
+
+        Route::prefix('events')->name('events.')->group(function (): void {
+            Route::get('/', EventIndexController::class)->name('index');
+            Route::get('recommended', EventRecommendedController::class)->name('recommended');
+            Route::get('{event}', EventShowController::class)->name('show');
+            Route::patch('{event}', EventUpdateController::class)->name('update');
+            Route::delete('{event}', EventDestroyController::class)->name('destroy');
+            Route::delete('{event}/rsvp', EventCancelRsvpController::class)->name('rsvp.destroy');
+
+            Route::middleware('verified')->group(function (): void {
+                Route::post('/', EventStoreController::class)->name('store');
+                Route::put('{event}/rsvp', EventRsvpController::class)->name('rsvp');
+            });
+        });
+
+        Route::prefix('projects')->name('projects.')->group(function (): void {
+            Route::get('/', ProjectIndexController::class)->name('index');
+            Route::get('recommended', ProjectRecommendedController::class)->name('recommended');
+            Route::get('{project}', ProjectShowController::class)->name('show');
+            Route::patch('{project}', ProjectUpdateController::class)->name('update');
+            Route::delete('{project}', ProjectDestroyController::class)->name('destroy');
+            Route::delete('{project}/request', ProjectLeaveRequestController::class)->name('request.destroy');
+            Route::put('{project}/members/{user}', ProjectMemberDecisionController::class)->name('members.update');
+
+            Route::middleware('verified')->group(function (): void {
+                Route::post('/', ProjectStoreController::class)->name('store');
+                Route::put('{project}/request', ProjectJoinRequestController::class)->name('request');
+            });
         });
 
         Route::prefix('study-groups')->name('study-groups.')->group(function (): void {
