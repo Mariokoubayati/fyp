@@ -123,7 +123,7 @@ cd backend
 php artisan app:e2e
 ```
 
-It signs in as A, B, C and U and runs 132 checks over HTTP: access and permissions, profile, interests and courses, the whole study group flow, events (post, topic filter, RSVP, full, cancel), projects (post, request, accept, full team, notification), the whole marketplace flow, a full loan from request to repayment, trust and vouches, messaging with block and report, notifications, the home feed, token refresh and sign-out. It prints PASS/FAIL per check and ends with `All 127 checks passed.`
+It signs in as A, B, C and U and runs 132 checks over HTTP: access and permissions, profile, interests and courses, the whole study group flow, events (post, topic filter, RSVP, full, cancel), projects (post, request, accept, full team, notification), the whole marketplace flow, a full loan from request to repayment, trust and vouches, messaging with block and report, notifications, the home feed, token refresh and sign-out. It prints PASS/FAIL per check and ends with `All 132 checks passed.`
 
 Against a deployed server: `php artisan app:e2e --base=https://your-domain/api/v1`.
 
