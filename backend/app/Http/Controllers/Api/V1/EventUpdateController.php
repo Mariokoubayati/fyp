@@ -17,7 +17,7 @@ class EventUpdateController extends Controller
     {
         Gate::authorize('update', $event);
 
-        $event->update($request->validated());
+        $event->update($request->event());
 
         return new EventResource($event->load(['course', 'creator'])->loadAttendance($request->user()));
     }

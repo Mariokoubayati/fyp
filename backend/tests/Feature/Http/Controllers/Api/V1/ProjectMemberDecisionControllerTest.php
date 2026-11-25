@@ -5,6 +5,7 @@ namespace Tests\Feature\Http\Controllers\Api\V1;
 use App\Models\Project;
 use App\Models\User;
 use App\Notifications\ProjectRequestAnsweredNotification;
+use App\Notifications\ProjectTeamFullNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
@@ -75,5 +76,29 @@ class ProjectMemberDecisionControllerTest extends TestCase
         $this->asToken(JWTAuth::fromUser($project->owner))
             ->putJson(route('api.v1.projects.members.update', [$project, $waiting]), ['status' => 'maybe'])
             ->assertUnprocessable();
+    }
+
+    public function test_filling_the_last_seat_clears_the_other_requests_and_tells_them(): void
+    {
+        Notification::fake();
+        $project = Project::factory()->create(['team_size' => 2]);
+        [$chosen, $late, $other] = User::factory()->count(3)->create()->all();
+        $project->people()->attach([$chosen->id => ['status' => 'pending'], $late->id => ['status' => 'pending'], $other->id => ['status' => 'pending']]);
+
+        $this->asToken(JWTAuth::fromUser($project->owner))
+            ->putJson(route('api.v1.projects.members.update', [$project, $chosen]), ['status' => 'accepted'])
+            ->assertOk()
+            ->assertJsonPath('data.is_full', true)
+            ->assertJsonCount(0, 'data.requests');
+
+        $this->assertSame(0, $project->requests()->count());
+        Notification::assertSentTo([$late, $other], ProjectTeamFullNotification::class);
+        Notification::assertNotSentTo($chosen, ProjectTeamFullNotification::class);
+
+        $project->update(['team_size' => 3]);
+        $this->asToken(JWTAuth::fromUser($late))
+            ->putJson(route('api.v1.projects.request', $project))
+            ->assertOk()
+            ->assertJsonPath('data.my_status', 'pending');
     }
 }

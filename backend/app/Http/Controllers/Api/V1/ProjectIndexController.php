@@ -9,6 +9,7 @@ use App\Http\Resources\Api\V1\ProjectResource;
 use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Validation\Rule;
 
 class ProjectIndexController extends Controller
 {
@@ -20,7 +21,7 @@ class ProjectIndexController extends Controller
     {
         $request->validate([
             'filter' => ['nullable', 'in:all,mine,joined'],
-            'tag' => ['nullable', 'string'],
+            'tag' => ['nullable', Rule::enum(CampusTag::class)],
             'search' => ['nullable', 'string', 'max:100'],
         ]);
 

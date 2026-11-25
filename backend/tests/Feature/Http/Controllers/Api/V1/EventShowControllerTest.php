@@ -43,4 +43,15 @@ class EventShowControllerTest extends TestCase
             ->getJson(route('api.v1.events.show', 999))
             ->assertNotFound();
     }
+
+    public function test_a_deleted_event_gets_a_plain_message(): void
+    {
+        $event = Event::factory()->create();
+        $event->delete();
+
+        $this->asToken(JWTAuth::fromUser(User::factory()->create()))
+            ->getJson(route('api.v1.events.show', $event->id))
+            ->assertNotFound()
+            ->assertExactJson(['message' => 'This was removed or no longer exists.']);
+    }
 }

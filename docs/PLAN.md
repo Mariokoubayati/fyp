@@ -22,7 +22,7 @@ Status legend: ✅ done · 🟡 in progress · ⬜ not started · 🔵 stretch
 | Rule-based trust score (events, tiers, nightly recalc, history) | ✅ | Anti-collusion added (PR #2) |
 | Vouches + public student profile | ✅ | |
 | Mobile app, 5 tabs (Expo Router) | ✅ | The second tab is now **Campus**: study groups, events and projects |
-| Backend tests | ✅ | 341 passing on MySQL 8 and SQLite + 38 ML tests, CI on every PR |
+| Backend tests | ✅ | 349 passing on MySQL 8 and SQLite + 38 ML tests, CI on every PR |
 | Test plan + end-to-end script | ✅ | PR #6: `docs/TEST-PLAN.md` (iPhone + Android checklist), `php artisan app:e2e` (127 checks), browser build for the second account; 3 real bugs fixed |
 | Messaging + notifications | ✅ | PR #5: chats, block/report, notifications list, header badges |
 | Home feed + recommender | ✅ | PR #4: groups and listings; PR #8: events and projects too |
@@ -87,6 +87,9 @@ In the supervisor response, events, analytics and badges are labeled stretch (hi
 | 2026-11-24 | Going to events and joining projects never changes the trust score (the score keeps its three signals) |
 | 2026-11-24 | Event and project recommendations follow the same pattern: model in Flask, SQL ordering as fallback and baseline; they run on their own random stream so the group and listing results do not change |
 | 2026-11-24 | SUS questionnaire in Google Forms; facilitator plays the second student in the browser |
+| 2026-11-25 | Moving an event's start moves its end too (same length) |
+| 2026-11-25 | When a project team fills, the waiting requests are removed (not declined) and told, so they can ask again if a spot opens |
+| 2026-11-25 | Owners can edit events and projects in the app |
 
 ## 5. What Mario owns
 

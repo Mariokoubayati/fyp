@@ -53,4 +53,12 @@ class ProjectIndexControllerTest extends TestCase
         $this->asToken($token)->getJson(route('api.v1.projects.index', ['search' => 'charity']))
             ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $joined->id);
     }
+
+    public function test_returns_422_for_an_unknown_topic_or_filter(): void
+    {
+        $token = JWTAuth::fromUser(User::factory()->create());
+
+        $this->asToken($token)->getJson(route('api.v1.projects.index', ['tag' => 'crypto']))->assertUnprocessable()->assertJsonValidationErrors('tag');
+        $this->asToken($token)->getJson(route('api.v1.projects.index', ['filter' => 'everything']))->assertUnprocessable();
+    }
 }

@@ -6,8 +6,8 @@ No test plan can prove software is 100% correct. This one makes sure that **ever
 
 | Layer | What it checks | How long | Who | When |
 |---|---|---|---|---|
-| **1. Automated tests** | Every API rule, permission and calculation (341 backend tests, 38 ML tests, app type-check and lint) | runs by itself | GitHub CI | Every pull request |
-| **2. End-to-end script** | All main flows over HTTP against your running server (127 checks) | ~1 minute | You, one command | After setup, after every merge, before a demo |
+| **1. Automated tests** | Every API rule, permission and calculation (349 backend tests, 38 ML tests, app type-check and lint) | runs by itself | GitHub CI | Every pull request |
+| **2. End-to-end script** | All main flows over HTTP against your running server (132 checks) | ~1 minute | You, one command | After setup, after every merge, before a demo |
 | **3. Manual phone checklist** | What only a person can see: screens, taps, keyboard, two phones talking, offline | ~3 hours per platform | You | Once on iPhone, once on Android, then the "smoke" subset after changes |
 
 If layer 1 or 2 fails, fix that first. There is no point testing screens on a broken server.
@@ -74,7 +74,7 @@ In `backend/.env`: `TRUST_MODEL_ENABLED=true` and `RECOMMENDER_ENABLED=true`, th
 | **C** | `202300002@ua.edu.lb` | An outsider, for "should not be allowed" cases (Test User Three) |
 | **U** | `202300009@ua.edu.lb` | Unverified student |
 
-A, B and C share the same courses. 40 other demo students exist with random names. Interests and skills: A = Tech, Career / Laravel, SQL; B = Tech, Sports / Python, UI design; C = Arts, Social / Photography. The demo data also has 16 upcoming events (3 past) and 8 projects, the same on every reset.
+A, B and C share the same courses. Demo times are set in Beirut time (a 2 PM workshop shows 2 PM on the phone). 40 other demo students exist with random names. Interests and skills: A = Tech, Career / Laravel, SQL; B = Tech, Sports / Python, UI design; C = Arts, Social / Photography. The demo data also has 16 upcoming events (3 past) and 8 projects, the same on every reset.
 
 ### 0.6 Reset to a clean state
 
@@ -89,7 +89,7 @@ php artisan migrate:fresh --seed && php artisan db:seed --class=DemoSeeder
 ## 1. Layer 1: automated tests
 
 ```sh
-cd backend && php artisan test          # 341 tests
+cd backend && php artisan test          # 349 tests
 cd ml && python -m pytest -q            # 38 tests
 cd mobile && npm run typecheck && npx eslint .
 ```
@@ -123,7 +123,7 @@ cd backend
 php artisan app:e2e
 ```
 
-It signs in as A, B, C and U and runs 127 checks over HTTP: access and permissions, profile, interests and courses, the whole study group flow, events (post, topic filter, RSVP, full, cancel), projects (post, request, accept, full team, notification), the whole marketplace flow, a full loan from request to repayment, trust and vouches, messaging with block and report, notifications, the home feed, token refresh and sign-out. It prints PASS/FAIL per check and ends with `All 127 checks passed.`
+It signs in as A, B, C and U and runs 132 checks over HTTP: access and permissions, profile, interests and courses, the whole study group flow, events (post, topic filter, RSVP, full, cancel), projects (post, request, accept, full team, notification), the whole marketplace flow, a full loan from request to repayment, trust and vouches, messaging with block and report, notifications, the home feed, token refresh and sign-out. It prints PASS/FAIL per check and ends with `All 132 checks passed.`
 
 Against a deployed server: `php artisan app:e2e --base=https://your-domain/api/v1`.
 
@@ -215,6 +215,10 @@ The tab is now called **Campus**, with a switcher at the top: Study groups / Eve
 | EVT-09 | Reminder: with B going to an event tomorrow, run `php artisan events:remind` twice | B gets exactly one "… is coming up" notification; tapping it opens the event | ☐ | ☐ |
 | EVT-10 | As A → Cancel this event | Gone from every list; B gets "… was cancelled" | ☐ | ☐ |
 | EVT-11 | Events that already started | Never in For you or All; opening one shows "This event has started" | ☐ | ☐ |
+| EVT-12 | As A, open your event → Edit event → change the title, move it a day later, set 3 hours → Save changes | Back on the event with the new title and time, "… to …" 3 hours apart. Attendees stay | ☐ | ☐ |
+| EVT-13 | Edit event with max people below the students going | Refused under "Max people" | ☐ | ☐ |
+| EVT-14 | Reminder after a reschedule: B going to an event tomorrow, run `php artisan events:remind`, move the event 2 hours later, run it again | B gets a second "… is coming up" with the new time | ☐ | ☐ |
+| EVT-15 | Tap an old notification of an event that was cancelled since | "This was removed or no longer exists.", no technical text | ☐ | ☐ |
 
 ### 3.6 Campus tab: projects (PRJ)
 
@@ -231,6 +235,10 @@ The tab is now called **Campus**, with a switcher at the top: Study groups / Eve
 | PRJ-09 | As B → Stop looking for members | Project leaves All and For you; "Look for members again" reopens it | ☐ | ☐ |
 | PRJ-10 | As A → Leave the team | A is off the team, count goes down | ☐ | ☐ |
 | PRJ-11 | As C, check there are no owner buttons on B's project and no requests list | Only Ask to join | ☐ | ☐ |
+| PRJ-12 | As B → Edit project → change skills and team size → Save changes | Back on the project with the new skills and "x/new size on the team" | ☐ | ☐ |
+| PRJ-13 | Edit project with team size below the members | Refused under "Team size" | ☐ | ☐ |
+| PRJ-14 | Team size 2, A and C both ask; B accepts A | Team full, "No requests waiting"; C gets "The team for … is full" and can ask again if B raises the team size | ☐ | ☐ |
+| PRJ-15 | As B → Delete project, with A on the team | A gets "… was deleted" | ☐ | ☐ |
 
 ### 3.7 Marketplace (MKT)
 
@@ -415,7 +423,7 @@ Fix blockers and majors before the usability study. Retest the failed ID and its
 | Layer | Result | Date | By |
 |---|---|---|---|
 | 1. Automated (CI green on the last PR) | | | |
-| 2. `php artisan app:e2e` (127/127) | | | |
+| 2. `php artisan app:e2e` (132/132) | | | |
 | 3. Manual, iPhone (all IDs ticked) | | | |
 | 3. Manual, Android (all IDs ticked) | | | |
 | 4. Deployment checklist | | | |
@@ -445,3 +453,17 @@ Fix blockers and majors before the usability study. Retest the failed ID and its
 | AI-lowered limit was refused with "Your trust score is too low" | Cosmetic | Says the risk check set the limit; 1 test |
 | Searching `%` or `_` matched every listing | Cosmetic | Search treats them as plain characters (listings, courses, students); 1 test |
 | Demo data differed on every reset | Cosmetic | `DemoSeeder` is seeded: every reset gives the same students, scores and chats (A = 543, Basic, 3 chats) |
+
+## 9. Bugs found in the full test pass of 2026-11-25 (fixed)
+
+| Bug | Severity | Fix |
+|---|---|---|
+| Moving an event's start past its end time was accepted (the event ended before it started) | Minor | When only the start moves, the end moves with it, so the event keeps its length; 2 tests |
+| A rescheduled event got no reminder for its new time | Minor | Reminders are counted per event and start time; 1 test (EVT-14) |
+| Opening something deleted showed "No query results for model [App\Models\Event] 12" | Minor | Any missing record says "This was removed or no longer exists."; 1 test (EVT-15) |
+| Deleting a project told nobody | Minor | Members and waiting students get "… was deleted"; 1 test (PRJ-15) |
+| When a team filled up, the other requests stayed pending forever | Minor | They are removed and told "The team for … is full"; they can ask again if a spot opens; 1 test (PRJ-14) |
+| Owners could not edit an event or project in the app (delete and repost was the only way, which told attendees it was cancelled) | Gap | "Edit event" and "Edit project" screens (EVT-12, EVT-13, PRJ-12, PRJ-13) |
+| Demo times showed 2 hours late on a Lebanese phone | Cosmetic | `DemoSeeder` sets clock times in Beirut time |
+| An unknown topic filter returned everything | Cosmetic | Refused with 422 on events and projects; 2 tests |
+| "Marketplace" tab label cut to "Marketpl…" on a 320 pt phone | Cosmetic | Smaller tab labels below 360 pt wide |

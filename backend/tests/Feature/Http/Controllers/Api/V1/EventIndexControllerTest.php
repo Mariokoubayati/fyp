@@ -66,4 +66,12 @@ class EventIndexControllerTest extends TestCase
             ->getJson(route('api.v1.events.index', ['filter' => 'everything']))
             ->assertUnprocessable();
     }
+
+    public function test_returns_422_for_an_unknown_topic(): void
+    {
+        $this->asToken(JWTAuth::fromUser(User::factory()->create()))
+            ->getJson(route('api.v1.events.index', ['tag' => 'nonsense']))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('tag');
+    }
 }

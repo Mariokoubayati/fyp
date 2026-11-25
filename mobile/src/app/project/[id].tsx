@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { getErrorMessage } from '@/api/errors';
@@ -22,11 +22,14 @@ export default function ProjectDetail() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchProject(projectId)
-      .then(setProject)
-      .catch((e) => setError(getErrorMessage(e)));
-  }, [projectId]);
+  // Reload on focus, so coming back from "Edit" shows the changes.
+  useFocusEffect(
+    useCallback(() => {
+      fetchProject(projectId)
+        .then(setProject)
+        .catch((e) => setError(getErrorMessage(e)));
+    }, [projectId]),
+  );
 
   const run = useCallback(async (action: () => Promise<void>) => {
     setBusy(true);
@@ -129,6 +132,7 @@ export default function ProjectDetail() {
       <View style={styles.actions}>
         {project.is_owner ? (
           <>
+            <Button title="Edit project" variant="secondary" onPress={() => router.push(`/project/edit/${project.id}`)} disabled={busy} />
             <Button
               title={project.is_open ? 'Stop looking for members' : 'Look for members again'}
               variant="secondary"
