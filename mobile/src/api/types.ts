@@ -96,7 +96,7 @@ export interface Listing {
   is_buyer: boolean;
   rating?: { stars: number; comment: string | null } | null;
   course?: Course | null;
-  seller?: { id: number; name: string };
+  seller?: { id: number; name: string; badges: BadgeChip[] };
 }
 
 export interface NewListing {
@@ -127,8 +127,8 @@ export interface Loan {
   due_date: string;
   status: LoanStatus;
   my_role: 'borrower' | 'lender' | null;
-  borrower?: { id: number; name: string; trust_score: number; trust_tier: TrustTier };
-  lender?: { id: number; name: string } | null;
+  borrower?: { id: number; name: string; trust_score: number; trust_tier: TrustTier; badges: BadgeChip[] };
+  lender?: { id: number; name: string; badges: BadgeChip[] } | null;
   handover: { lender_confirmed: boolean; borrower_confirmed: boolean };
   repayment: { lender_confirmed: boolean; borrower_confirmed: boolean };
   activated_at: string | null;
@@ -174,6 +174,14 @@ export type BadgeKey =
   | 'event_host'
   | 'team_player'
   | 'well_vouched';
+
+/** A badge shown next to a name where students decide (seller, borrower, lender, join request). */
+export interface BadgeChip {
+  key: BadgeKey;
+  title: string;
+  /** An Ionicons name. */
+  icon: string;
+}
 
 export interface EarnedBadge {
   key: BadgeKey;
@@ -265,7 +273,7 @@ export interface Project {
   owner?: { id: number; name: string };
   members?: { id: number; name: string; major: string | null }[];
   /** Only sent to the owner. */
-  requests?: { id: number; name: string; major: string | null; skills: string[]; message: string | null }[];
+  requests?: { id: number; name: string; major: string | null; skills: string[]; badges: BadgeChip[]; message: string | null }[];
 }
 
 export interface NewProject {

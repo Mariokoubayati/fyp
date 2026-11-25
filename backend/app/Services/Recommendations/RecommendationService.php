@@ -88,7 +88,7 @@ class RecommendationService
         $courseIds = $courses->modelKeys();
 
         $candidates = Listing::query()
-            ->with(['seller', 'course'])
+            ->with(['seller.badges', 'course'])
             ->where('status', ListingStatus::Available)
             ->where('seller_id', '!=', $user->id)
             ->latest()

@@ -4,6 +4,7 @@ import { Loan } from '../api/types';
 import { STATUS_LABELS } from '../lib/loans';
 import { colors, spacing, typography } from '../theme';
 import { Card } from './Card';
+import { BadgeChips } from './BadgeChips';
 
 interface LoanCardProps {
   loan: Loan;
@@ -11,7 +12,8 @@ interface LoanCardProps {
 }
 
 export function LoanCard({ loan, onPress }: LoanCardProps) {
-  const counterpart = loan.my_role === 'lender' ? loan.borrower?.name : loan.my_role === 'borrower' ? loan.lender?.name : loan.borrower?.name;
+  const other = loan.my_role === 'borrower' ? loan.lender : loan.borrower;
+  const counterpart = other?.name;
   const isLate = loan.status === 'overdue' || loan.status === 'defaulted';
 
   return (
@@ -22,6 +24,7 @@ export function LoanCard({ loan, onPress }: LoanCardProps) {
           <Text style={[styles.status, isLate && styles.late]}>{STATUS_LABELS[loan.status]}</Text>
         </View>
         {counterpart ? <Text style={typography.caption}>{counterpart}</Text> : null}
+        <BadgeChips badges={other?.badges} />
         <Text style={typography.caption}>Due {loan.due_date}</Text>
       </Card>
     </Pressable>

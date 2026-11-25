@@ -13,6 +13,7 @@ import { Loading } from '@/components/Loading';
 import { Screen } from '@/components/Screen';
 import { TagList } from '@/components/TagList';
 import { colors, spacing, typography } from '@/theme';
+import { BadgeChips } from '@/components/BadgeChips';
 
 export default function ProjectDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -112,6 +113,7 @@ export default function ProjectDetail() {
                 {request.name}
                 {request.major ? ` · ${request.major}` : ''}
               </Text>
+              <BadgeChips badges={request.badges} />
               <TagList words={request.skills} />
               {request.message ? <Text style={typography.caption}>{`"${request.message}"`}</Text> : null}
               <View style={styles.row}>

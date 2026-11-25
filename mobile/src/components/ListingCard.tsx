@@ -4,6 +4,7 @@ import { Listing } from '../api/types';
 import { CATEGORY_LABELS, CONDITION_LABELS, formatPrice } from '../lib/listings';
 import { colors, radius, spacing, typography } from '../theme';
 import { Card } from './Card';
+import { BadgeChips } from './BadgeChips';
 
 interface ListingCardProps {
   listing: Listing;
@@ -24,6 +25,7 @@ export function ListingCard({ listing, onPress }: ListingCardProps) {
           {CATEGORY_LABELS[listing.category]} · {CONDITION_LABELS[listing.condition]}
           {listing.seller ? ` · ${listing.seller.name}` : ''}
         </Text>
+        <BadgeChips badges={listing.seller?.badges} />
         {listing.status !== 'available' ? (
           <Text style={[styles.badge, listing.status === 'sold' && styles.badgeSold]}>
             {listing.status === 'sold' ? 'Sold' : 'Reserved'}

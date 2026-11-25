@@ -22,7 +22,7 @@ Status legend: ✅ done · 🟡 in progress · ⬜ not started · 🔵 stretch
 | Rule-based trust score (events, tiers, nightly recalc, history) | ✅ | Anti-collusion added (PR #2) |
 | Vouches + public student profile | ✅ | |
 | Mobile app, 5 tabs (Expo Router) | ✅ | The second tab is now **Campus**: study groups, events and projects |
-| Backend tests | ✅ | 360 passing on MySQL 8 and SQLite + 38 ML tests, CI on every PR |
+| Backend tests | ✅ | 363 passing on MySQL 8 and SQLite + 38 ML tests, CI on every PR |
 | Test plan + end-to-end script | ✅ | PR #6: `docs/TEST-PLAN.md` (iPhone + Android checklist), `php artisan app:e2e` (127 checks), browser build for the second account; 3 real bugs fixed |
 | Messaging + notifications | ✅ | PR #5: chats, block/report, notifications list, header badges |
 | Home feed + recommender | ✅ | PR #4: groups and listings; PR #8: events and projects too |
@@ -93,6 +93,7 @@ In the supervisor response, events, analytics and badges are labeled stretch (hi
 | 2026-11-25 | Badges are awarded the moment the action happens (an hourly sweep catches "Event goer", which depends on time passing) and send one notification each |
 | 2026-11-25 | Badges are public on the student profile and never change the trust score; loan and vouch badges count only what the anti-collusion rules count |
 | 2026-11-25 | The dashboard is "My activity" under Profile (no sixth tab); charts are plain views, no chart library |
+| 2026-11-25 | Badges show where students decide, next to the trust score: seller badges on listings, borrower and lender badges on loans, teammate badges on join requests. Only the badges that matter for that choice |
 
 ## 5. What Mario owns
 

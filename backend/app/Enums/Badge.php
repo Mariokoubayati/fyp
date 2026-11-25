@@ -2,6 +2,9 @@
 
 namespace App\Enums;
 
+use App\Models\User;
+use App\Models\UserBadge;
+
 /**
  * Badges reward taking part. They are shown on profiles but never change the trust score.
  */
@@ -66,6 +69,43 @@ enum Badge: string
             self::TeamPlayer => 'people',
             self::WellVouched => 'thumbs-up',
         };
+    }
+
+    /**
+     * The badges that matter where a student decides about someone, strongest first:
+     * a buyer looking at a seller, a lender at a borrower, an owner at a join request.
+     *
+     * @param  'seller'|'borrower'|'lender'|'teammate'  $role
+     * @return list<self>
+     */
+    public static function relevantTo(string $role): array
+    {
+        return match ($role) {
+            'seller' => [self::TopSeller, self::FirstSale, self::WellVouched],
+            'borrower' => [self::ReliableBorrower, self::WellVouched],
+            'lender' => [self::HelpingHand, self::WellVouched],
+            'teammate' => [self::TeamPlayer, self::StudyBuddy, self::EventHost],
+        };
+    }
+
+    /**
+     * The student's earned badges that matter for this role, ready for the API.
+     * Uses the loaded "badges" relation (eager-load "seller.badges" in lists to avoid a query per row).
+     *
+     * @param  'seller'|'borrower'|'lender'|'teammate'  $role
+     * @return list<array{key: string, title: string, icon: string}>
+     */
+    public static function shownFor(User $user, string $role): array
+    {
+        $earned = $user->loadMissing('badges')->badges->map(fn (UserBadge $row): self => $row->badge);
+        $shown = array_values(array_filter(self::relevantTo($role), fn (self $badge): bool => $earned->contains($badge)));
+
+        // "Top seller" already says more than "First sale".
+        if (in_array(self::TopSeller, $shown, true)) {
+            $shown = array_values(array_filter($shown, fn (self $badge): bool => $badge !== self::FirstSale));
+        }
+
+        return array_map(fn (self $badge): array => ['key' => $badge->value, 'title' => $badge->title(), 'icon' => $badge->icon()], $shown);
     }
 
     /**

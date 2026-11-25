@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Enums\Badge;
 use App\Models\Listing;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -32,7 +33,11 @@ class ListingResource extends JsonResource
             'is_buyer' => $this->buyer_id !== null && $this->buyer_id === $request->user()?->id,
             'rating' => $this->whenLoaded('rating', fn () => $this->rating ? ['stars' => $this->rating->stars, 'comment' => $this->rating->comment] : null),
             'course' => CourseResource::make($this->whenLoaded('course')),
-            'seller' => $this->whenLoaded('seller', fn () => ['id' => $this->seller->id, 'name' => $this->seller->name]),
+            'seller' => $this->whenLoaded('seller', fn () => [
+                'id' => $this->seller->id,
+                'name' => $this->seller->name,
+                'badges' => Badge::shownFor($this->seller, 'seller'),
+            ]),
         ];
     }
 }

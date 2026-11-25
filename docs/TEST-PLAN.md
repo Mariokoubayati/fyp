@@ -6,7 +6,7 @@ No test plan can prove software is 100% correct. This one makes sure that **ever
 
 | Layer | What it checks | How long | Who | When |
 |---|---|---|---|---|
-| **1. Automated tests** | Every API rule, permission and calculation (360 backend tests, 38 ML tests, app type-check and lint) | runs by itself | GitHub CI | Every pull request |
+| **1. Automated tests** | Every API rule, permission and calculation (363 backend tests, 38 ML tests, app type-check and lint) | runs by itself | GitHub CI | Every pull request |
 | **2. End-to-end script** | All main flows over HTTP against your running server (135 checks) | ~1 minute | You, one command | After setup, after every merge, before a demo |
 | **3. Manual phone checklist** | What only a person can see: screens, taps, keyboard, two phones talking, offline | ~3 hours per platform | You | Once on iPhone, once on Android, then the "smoke" subset after changes |
 
@@ -89,7 +89,7 @@ php artisan migrate:fresh --seed && php artisan db:seed --class=DemoSeeder
 ## 1. Layer 1: automated tests
 
 ```sh
-cd backend && php artisan test          # 360 tests
+cd backend && php artisan test          # 363 tests
 cd ml && python -m pytest -q            # 38 tests
 cd mobile && npm run typecheck && npx eslint .
 ```
@@ -378,6 +378,9 @@ php artisan reports:review X_EMAIL
 | DASH-06 | Event goer: as C, be going to an event 1 hour from now that is C's third; wait until it starts and run `php artisan badges:award` | C gets "Event goer" (this one is checked hourly, after the event starts) | ☐ | ☐ |
 | DASH-07 | Badges never touch the score: note A's trust score, earn a badge, look again | Same score | ☐ | ☐ |
 | DASH-08 | Smallest phone (iPhone SE size) | Badge tiles wrap, no cut text, bar labels readable | ☐ | ☐ |
+| DASH-09 🔥 | Marketplace → Browse; open a listing whose card shows "First sale" | The badge pill is on the card and under "Sold by"; sellers with no marketplace badge show none | ☐ | ☐ |
+| DASH-10 | Lending → open requests, and a loan you are part of | Borrowers show "Reliable borrower", lenders "Helping hand" when they have them; unrelated badges (e.g. Study buddy) do not show there | ☐ | ☐ |
+| DASH-11 | As a project owner with a join request from a student who has "Team player" | The pill shows above the student's skills | ☐ | ☐ |
 
 ### 3.12 Robustness (ROB)
 

@@ -19,7 +19,7 @@ class LoanIndexController extends Controller
         $user = $request->user();
 
         $loans = Loan::query()
-            ->with(['borrower', 'lender'])
+            ->with(['borrower.badges', 'lender.badges'])
             ->when(
                 $request->string('role')->toString() === 'borrowed',
                 fn ($query) => $query->where('borrower_id', $user->id)->latest(),
