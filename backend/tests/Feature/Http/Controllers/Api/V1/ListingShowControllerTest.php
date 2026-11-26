@@ -2,9 +2,11 @@
 
 namespace Tests\Feature\Http\Controllers\Api\V1;
 
+use App\Enums\Badge;
 use App\Enums\ListingCondition;
 use App\Models\Listing;
 use App\Models\User;
+use App\Models\UserBadge;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 use Tests\TestCase;
@@ -50,5 +52,18 @@ class ListingShowControllerTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.is_buyer', true)
             ->assertJsonPath('data.rating', null);
+    }
+
+    public function test_shows_the_sellers_marketplace_badges_strongest_first(): void
+    {
+        $listing = Listing::factory()->create();
+        foreach ([Badge::FirstSale, Badge::TopSeller, Badge::StudyBuddy] as $badge) {
+            UserBadge::create(['user_id' => $listing->seller_id, 'badge' => $badge, 'earned_at' => now()]);
+        }
+
+        $this->withToken(JWTAuth::fromUser(User::factory()->create()))
+            ->getJson(route('api.v1.listings.show', $listing))
+            ->assertOk()
+            ->assertJsonPath('data.seller.badges', [['key' => 'top_seller', 'title' => 'Top seller', 'icon' => 'star']]);
     }
 }

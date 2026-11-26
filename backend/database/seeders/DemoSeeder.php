@@ -20,10 +20,12 @@ use App\Models\StudyGroup;
 use App\Models\User;
 use App\Models\Vouch;
 use App\Notifications\NewMessageNotification;
+use App\Services\Badges\BadgeService;
 use App\Services\Trust\TrustService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 /**
  * A realistic campus for demos, device testing and the usability study.
@@ -119,7 +121,16 @@ class DemoSeeder extends Seeder
         'Business' => ['Marketing', 'Excel', 'Public speaking', 'Finance', 'Event planning'],
     ];
 
-    public function run(TrustService $trust): void
+    public function run(TrustService $trust, BadgeService $badges): void
+    {
+        // Demo students earn their badges quietly: nobody starts with a bell full of "You earned…".
+        BadgeService::quietly(function () use ($trust, $badges): void {
+            $this->campus($trust);
+            User::all()->each(fn (User $student) => $badges->check($student));
+        });
+    }
+
+    private function campus(TrustService $trust): void
     {
         // Same seed, same campus: every reset gives the same students, scores and chats,
         // so demos, the usability study and the test plan always start from the same data.
@@ -150,6 +161,7 @@ class DemoSeeder extends Seeder
         $this->interestsAndSkills($students);
         $this->events($students, $courses);
         $this->projects($students);
+        $this->history($demo);
 
         $students->each(fn (User $student) => $trust->refresh($student));
     }
@@ -484,6 +496,27 @@ class DemoSeeder extends Seeder
                 $project->people()->syncWithoutDetaching([$waiting->id => ['status' => ProjectMemberStatus::Pending->value, 'message' => 'I would love to help.']]);
             }
         }
+    }
+
+    /**
+     * Give the "My activity" screen a believable past: memberships are dated a few days before
+     * the group or event instead of "now", and Test User went to two past events.
+     * Test User stays one group short of "Study buddy", so joining a group (SUS task 1) earns it live.
+     * Runs last and uses no random numbers, so the rest of the demo data stays the same.
+     */
+    private function history(User $demo): void
+    {
+        foreach (['study_group_user' => ['study_groups', 'study_group_id', 3], 'event_user' => ['events', 'event_id', 2]] as $pivot => [$table, $key, $daysBefore]) {
+            DB::table($pivot)->join($table, "{$table}.id", '=', "{$pivot}.{$key}")
+                ->get(["{$pivot}.id", "{$table}.starts_at"])
+                ->each(function (object $row) use ($pivot, $daysBefore): void {
+                    $joined = Carbon::parse($row->starts_at)->subDays($daysBefore)->min(now());
+                    DB::table($pivot)->where('id', $row->id)->update(['created_at' => $joined, 'updated_at' => $joined]);
+                });
+        }
+
+        Event::whereIn('title', ['Freshers welcome party', 'Programming contest'])->get()
+            ->each(fn (Event $event) => $event->attendees()->syncWithoutDetaching([$demo->id => ['created_at' => $event->starts_at->copy()->subDays(2), 'updated_at' => $event->starts_at->copy()->subDays(2)]]));
     }
 
     /**

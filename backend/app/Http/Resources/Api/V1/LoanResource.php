@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Enums\Badge;
 use App\Models\Loan;
 use App\Services\Trust\TrustScoreCalculator;
 use Illuminate\Http\Request;
@@ -33,10 +34,12 @@ class LoanResource extends JsonResource
                 'name' => $this->borrower->name,
                 'trust_score' => $this->borrower->trust_score,
                 'trust_tier' => app(TrustScoreCalculator::class)->tierFor($this->borrower->trust_score)['name'],
+                'badges' => Badge::shownFor($this->borrower, 'borrower'),
             ]),
             'lender' => $this->whenLoaded('lender', fn () => $this->lender ? [
                 'id' => $this->lender->id,
                 'name' => $this->lender->name,
+                'badges' => Badge::shownFor($this->lender, 'lender'),
             ] : null),
             'handover' => [
                 'lender_confirmed' => $this->lender_handover_at !== null,

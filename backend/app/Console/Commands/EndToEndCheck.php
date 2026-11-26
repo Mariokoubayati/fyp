@@ -59,6 +59,7 @@ class EndToEndCheck extends Command
             'Trust and vouches' => fn () => $this->trustAndVouches(),
             'Messaging' => fn () => $this->messaging(),
             'Notifications' => fn () => $this->notifications(),
+            'Activity and badges' => fn () => $this->activityAndBadges(),
             'Recommendations' => fn () => $this->recommendations(),
             'Sign out' => fn () => $this->signOut(),
         ];
@@ -342,6 +343,13 @@ class EndToEndCheck extends Command
         $this->check('Students cannot report themselves', fn () => $this->as('A')->post('/users/'.$this->id('A').'/report', ['reason' => 'spam']), 403);
         $this->check('Unverified students cannot report', fn () => $this->as('U')->post('/users/'.$this->id('C').'/report', ['reason' => 'spam']), 403);
         $this->check('A report cannot attach someone else\'s chat', fn () => $this->as('C')->post('/users/'.$this->id('B').'/report', ['reason' => 'spam', 'conversation_id' => $conversationId]), 422);
+    }
+
+    private function activityAndBadges(): void
+    {
+        $this->check('My activity loads with every badge', fn () => $this->as('A')->get('/me/activity'), 200, fn (Response $r) => count($r->json('data.badges')) === 9 && isset($r->json('data.months')[3]));
+        $this->check('A sale earned the seller "First sale"', fn () => $this->as('A')->get('/me/activity'), 200, fn (Response $r) => collect($r->json('data.badges'))->firstWhere('key', 'first_sale')['earned_at'] !== null);
+        $this->check('Classmates see earned badges on the profile', fn () => $this->as('B')->get("/users/{$this->id('A')}"), 200, fn (Response $r) => collect($r->json('data.badges'))->contains('key', 'first_sale'));
     }
 
     private function notifications(): void

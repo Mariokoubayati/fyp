@@ -35,6 +35,8 @@ function describe(n: AppNotification): { title: string; body: string } {
       return { title: `Your request to join ${n.data.title ?? 'a project'} was declined`, body: 'Have a look at other projects that need your skills.' };
     case 'project_team_full':
       return { title: `The team for ${n.data.title ?? 'a project'} is full`, body: 'Your request was removed. You can ask again if a spot opens.' };
+    case 'badge_earned':
+      return { title: `You earned a badge: ${n.data.title ?? 'new badge'}`, body: 'See all your badges in My activity.' };
     case 'project_deleted':
       return { title: `${n.data.title ?? 'A project'} was deleted`, body: `${n.data.other?.name ?? 'The owner'} removed this project.` };
   }
@@ -52,6 +54,8 @@ function open(n: AppNotification) {
     router.push(`/event/${n.data.event_id}`);
   } else if (n.data.project_id) {
     router.push(`/project/${n.data.project_id}`);
+  } else if (n.type === 'badge_earned') {
+    router.push('/activity');
   }
 }
 

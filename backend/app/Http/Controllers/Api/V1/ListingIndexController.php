@@ -21,7 +21,7 @@ class ListingIndexController extends Controller
         $search = $request->string('search')->trim()->toString();
 
         $listings = Listing::query()
-            ->with(['seller', 'course'])
+            ->with(['seller.badges', 'course'])
             ->when(
                 $request->boolean('mine'),
                 fn ($query) => $query->where('seller_id', $user->id),

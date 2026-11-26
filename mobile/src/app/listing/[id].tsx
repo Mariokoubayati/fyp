@@ -13,6 +13,7 @@ import { Screen } from '@/components/Screen';
 import { StudentPicker } from '@/components/StudentPicker';
 import { CATEGORY_LABELS, CONDITION_LABELS, formatPrice } from '@/lib/listings';
 import { colors, spacing, typography } from '@/theme';
+import { BadgeChips } from '@/components/BadgeChips';
 
 export default function ListingDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -87,6 +88,7 @@ export default function ListingDetail() {
             Sold by {listing.seller.name}
           </Text>
         ) : null}
+        <BadgeChips badges={listing.seller?.badges} />
       </Card>
 
       {error ? <Text style={styles.error}>{error}</Text> : null}

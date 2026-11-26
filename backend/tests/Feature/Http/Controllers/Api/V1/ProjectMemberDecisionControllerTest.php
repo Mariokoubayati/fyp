@@ -45,6 +45,8 @@ class ProjectMemberDecisionControllerTest extends TestCase
 
         Notification::assertSentTo($yes, ProjectRequestAnsweredNotification::class, fn ($n) => $n->databaseType($yes) === 'project_request_accepted');
         Notification::assertSentTo($no, ProjectRequestAnsweredNotification::class, fn ($n) => $n->databaseType($no) === 'project_request_declined');
+        $this->assertTrue($yes->badges()->where('badge', 'team_player')->exists(), 'Accepted student earns Team player');
+        $this->assertFalse($no->badges()->exists());
     }
 
     public function test_returns_409_when_accepting_into_a_full_team(): void

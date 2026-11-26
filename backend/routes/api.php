@@ -36,6 +36,7 @@ use App\Http\Controllers\Api\V1\LoginController;
 use App\Http\Controllers\Api\V1\LogoutController;
 use App\Http\Controllers\Api\V1\MessageIndexController;
 use App\Http\Controllers\Api\V1\MessageStoreController;
+use App\Http\Controllers\Api\V1\MyActivityController;
 use App\Http\Controllers\Api\V1\MyTrustController;
 use App\Http\Controllers\Api\V1\NotificationIndexController;
 use App\Http\Controllers\Api\V1\NotificationReadController;
@@ -102,6 +103,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::delete('me/courses/{course}', EnrollmentDestroyController::class)->name('me.courses.destroy');
 
         Route::get('me/trust', MyTrustController::class)->name('me.trust');
+        Route::get('me/activity', MyActivityController::class)->name('me.activity');
         Route::get('users', UserSearchController::class)->name('users.search');
         Route::get('users/{user}', StudentProfileController::class)->name('users.show');
         Route::get('users/{user}/trust', UserTrustController::class)->name('users.trust');

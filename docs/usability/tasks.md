@@ -24,6 +24,8 @@ Read each task exactly as written. Start the timer when you finish reading. Stop
 | T6 | "You need 10 dollars for lunch and will pay it back next week. Ask for a loan." | Loan shows "Looking for a lender" | Lending |
 | T7 | "Send a message to the student who posted the Board games night event." | Chat opens with a sent message | Messaging |
 
+**Heads-up:** finishing T1 earns Test User the "Study buddy" badge, so the bell gets a new notification. That is expected; do not point it out.
+
 **You (as Test User Two, in the browser):** after T4, accept the request so they see the notification later if they open the bell; after T7, reply "Hi!" so they see the chat update.
 
 ## What to write down (one row per task in `observations.csv`)

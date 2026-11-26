@@ -5,6 +5,7 @@ import { StyleSheet, Text } from 'react-native';
 import { getErrorMessage } from '@/api/errors';
 import { fetchStudent, vouchFor, withdrawVouch } from '@/api/students';
 import { StudentProfile } from '@/api/types';
+import { BadgeGrid } from '@/components/BadgeGrid';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Loading } from '@/components/Loading';
@@ -73,6 +74,13 @@ export default function StudentScreen() {
           {student.vouch_count} {student.vouch_count === 1 ? 'vouch' : 'vouches'} from classmates
         </Text>
       </Card>
+
+      {student.badges.length > 0 ? (
+        <Card style={styles.card}>
+          <Text style={typography.heading}>Badges</Text>
+          <BadgeGrid badges={student.badges} />
+        </Card>
+      ) : null}
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 

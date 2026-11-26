@@ -22,7 +22,7 @@ Status legend: ✅ done · 🟡 in progress · ⬜ not started · 🔵 stretch
 | Rule-based trust score (events, tiers, nightly recalc, history) | ✅ | Anti-collusion added (PR #2) |
 | Vouches + public student profile | ✅ | |
 | Mobile app, 5 tabs (Expo Router) | ✅ | The second tab is now **Campus**: study groups, events and projects |
-| Backend tests | ✅ | 349 passing on MySQL 8 and SQLite + 38 ML tests, CI on every PR |
+| Backend tests | ✅ | 363 passing on MySQL 8 and SQLite + 38 ML tests, CI on every PR |
 | Test plan + end-to-end script | ✅ | PR #6: `docs/TEST-PLAN.md` (iPhone + Android checklist), `php artisan app:e2e` (127 checks), browser build for the second account; 3 real bugs fixed |
 | Messaging + notifications | ✅ | PR #5: chats, block/report, notifications list, header badges |
 | Home feed + recommender | ✅ | PR #4: groups and listings; PR #8: events and projects too |
@@ -44,7 +44,7 @@ Status legend: ✅ done · 🟡 in progress · ⬜ not started · 🔵 stretch
 | 11 | 3. Recommender | Flask: groups + listings (course, classmates, past partners, time of day, TF-IDF, price); Laravel cache; mobile home feed | precision@5 / recall@5 vs SQL baseline | ✅ PR #4 (done early, Week 10) |
 | 12 | 4. Messaging + notifications | 1:1 chat from profile, listing, loan; polling; bodies encrypted at rest + HTTPS; block/report; in-app notifications (database channel) for loans and messages | Two phones chat, DB stores ciphertext, due-loan reminder appears | ✅ PR #5 (done early, Week 10); phone test pending |
 | 13 | 5. Event & project hub + evaluation | Events (create, RSVP, tags) + projects (skills, join requests) + recommendations for both; SUS kit (tasks, form, scoring script) | Mario runs SUS with 5 to 8 students | 🟡 built in PR #8 (early, Week 12); SUS sessions to run |
-| 14 | 6. Analytics + badges, freeze | Personal dashboard, badge rules; security pass; load test on feed, listings, recommendations | Feature freeze | ⬜ |
+| 14 | 6. Analytics + badges, freeze | Personal dashboard, badge rules; security pass; load test on feed, listings, recommendations | Feature freeze | 🟡 dashboard + 9 badges built (early, Week 12); security pass, load test, freeze to do |
 | 15–16 | Report + defense | Chapters, slides, two rehearsals | | ⬜ |
 | Stretch | | Push notifications to the phone (needs an Expo dev build) | | 🔵 |
 
@@ -62,7 +62,7 @@ Nothing from the original proposal is dropped. Only the order changed, as the su
 | Encrypted messages | Phase 4 |
 | Automatic notifications | Phase 4 |
 | Event & project hub | ✅ Phase 5 |
-| Engagement analytics & badges | Phase 6 |
+| Engagement analytics & badges | ✅ Phase 6 (dashboard "My activity", 9 badges) |
 | Testing (now concrete) | Phases 0, 2, 3, 5 |
 
 In the supervisor response, events, analytics and badges are labeled stretch (his request). They are still built.
@@ -90,6 +90,10 @@ In the supervisor response, events, analytics and badges are labeled stretch (hi
 | 2026-11-25 | Moving an event's start moves its end too (same length) |
 | 2026-11-25 | When a project team fills, the waiting requests are removed (not declined) and told, so they can ask again if a spot opens |
 | 2026-11-25 | Owners can edit events and projects in the app |
+| 2026-11-25 | Badges are awarded the moment the action happens (an hourly sweep catches "Event goer", which depends on time passing) and send one notification each |
+| 2026-11-25 | Badges are public on the student profile and never change the trust score; loan and vouch badges count only what the anti-collusion rules count |
+| 2026-11-25 | The dashboard is "My activity" under Profile (no sixth tab); charts are plain views, no chart library |
+| 2026-11-25 | Badges show where students decide, next to the trust score: seller badges on listings, borrower and lender badges on loans, teammate badges on join requests. Only the badges that matter for that choice |
 
 ## 5. What Mario owns
 

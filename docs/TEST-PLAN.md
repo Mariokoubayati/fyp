@@ -6,8 +6,8 @@ No test plan can prove software is 100% correct. This one makes sure that **ever
 
 | Layer | What it checks | How long | Who | When |
 |---|---|---|---|---|
-| **1. Automated tests** | Every API rule, permission and calculation (349 backend tests, 38 ML tests, app type-check and lint) | runs by itself | GitHub CI | Every pull request |
-| **2. End-to-end script** | All main flows over HTTP against your running server (132 checks) | ~1 minute | You, one command | After setup, after every merge, before a demo |
+| **1. Automated tests** | Every API rule, permission and calculation (363 backend tests, 38 ML tests, app type-check and lint) | runs by itself | GitHub CI | Every pull request |
+| **2. End-to-end script** | All main flows over HTTP against your running server (135 checks) | ~1 minute | You, one command | After setup, after every merge, before a demo |
 | **3. Manual phone checklist** | What only a person can see: screens, taps, keyboard, two phones talking, offline | ~3 hours per platform | You | Once on iPhone, once on Android, then the "smoke" subset after changes |
 
 If layer 1 or 2 fails, fix that first. There is no point testing screens on a broken server.
@@ -74,7 +74,7 @@ In `backend/.env`: `TRUST_MODEL_ENABLED=true` and `RECOMMENDER_ENABLED=true`, th
 | **C** | `202300002@ua.edu.lb` | An outsider, for "should not be allowed" cases (Test User Three) |
 | **U** | `202300009@ua.edu.lb` | Unverified student |
 
-A, B and C share the same courses. Demo times are set in Beirut time (a 2 PM workshop shows 2 PM on the phone). 40 other demo students exist with random names. Interests and skills: A = Tech, Career / Laravel, SQL; B = Tech, Sports / Python, UI design; C = Arts, Social / Photography. The demo data also has 16 upcoming events (3 past) and 8 projects, the same on every reset.
+A, B and C share the same courses. Demo times are set in Beirut time (a 2 PM workshop shows 2 PM on the phone). 40 other demo students exist with random names. Interests and skills: A = Tech, Career / Laravel, SQL; B = Tech, Sports / Python, UI design; C = Arts, Social / Photography. The demo data also has 16 upcoming events (3 past) and 8 projects, the same on every reset. Badges: A starts with **First sale** and is one group short of **Study buddy** (2/3), so joining a study group earns it on the spot.
 
 ### 0.6 Reset to a clean state
 
@@ -89,7 +89,7 @@ php artisan migrate:fresh --seed && php artisan db:seed --class=DemoSeeder
 ## 1. Layer 1: automated tests
 
 ```sh
-cd backend && php artisan test          # 349 tests
+cd backend && php artisan test          # 363 tests
 cd ml && python -m pytest -q            # 38 tests
 cd mobile && npm run typecheck && npx eslint .
 ```
@@ -123,7 +123,7 @@ cd backend
 php artisan app:e2e
 ```
 
-It signs in as A, B, C and U and runs 132 checks over HTTP: access and permissions, profile, interests and courses, the whole study group flow, events (post, topic filter, RSVP, full, cancel), projects (post, request, accept, full team, notification), the whole marketplace flow, a full loan from request to repayment, trust and vouches, messaging with block and report, notifications, the home feed, token refresh and sign-out. It prints PASS/FAIL per check and ends with `All 132 checks passed.`
+It signs in as A, B, C and U and runs 135 checks over HTTP: access and permissions, profile, interests and courses, the whole study group flow, events (post, topic filter, RSVP, full, cancel), projects (post, request, accept, full team, notification), the whole marketplace flow, a full loan from request to repayment, trust and vouches, messaging with block and report, notifications, My activity and badges, the home feed, token refresh and sign-out. It prints PASS/FAIL per check and ends with `All 135 checks passed.`
 
 Against a deployed server: `php artisan app:e2e --base=https://your-domain/api/v1`.
 
@@ -364,6 +364,23 @@ php artisan reports:review X_EMAIL
 | NOTIF-04 | Tap a loan notification | Opens that loan | ☐ | ☐ |
 | NOTIF-05 | Open the bell, go back to Home | Bell badge cleared | ☐ | ☐ |
 | NOTIF-06 | Empty state (fresh account) | "Nothing new" | ☐ | ☐ |
+| NOTIF-07 | Tap a badge notification | Opens My activity | ☐ | ☐ |
+
+### 3.11b My activity and badges (DASH)
+
+| ID | Steps | Expected | iOS | Android |
+|---|---|---|---|---|
+| DASH-01 🔥 | As A, Profile → My activity and badges | Badges "1 of 9 earned": First sale in color, the others grey with progress (Study buddy 2/3, Event goer 2/3) | ☐ | ☐ |
+| DASH-02 | Scroll down | "This semester" bar chart with a legend; Marketplace $10 sold with an Earned/Spent chart; Lending $15 borrowed, "paid back 1 of 1 loan on time"; Study groups; Events and projects | ☐ | ☐ |
+| DASH-03 🔥 | As A, join a study group with room, then open the bell | "You earned a badge: Study buddy"; tapping it opens My activity with "2 of 9 earned" | ☐ | ☐ |
+| DASH-04 | As B, open A's profile | A "Badges" card with only A's earned badges | ☐ | ☐ |
+| DASH-05 | Sell an item as B to C (first sale for B) | B gets "You earned a badge: First sale" right away | ☐ | ☐ |
+| DASH-06 | Event goer: as C, be going to an event 1 hour from now that is C's third; wait until it starts and run `php artisan badges:award` | C gets "Event goer" (this one is checked hourly, after the event starts) | ☐ | ☐ |
+| DASH-07 | Badges never touch the score: note A's trust score, earn a badge, look again | Same score | ☐ | ☐ |
+| DASH-08 | Smallest phone (iPhone SE size) | Badge tiles wrap, no cut text, bar labels readable | ☐ | ☐ |
+| DASH-09 🔥 | Marketplace → Browse; open a listing whose card shows "First sale" | The badge pill is on the card and under "Sold by"; sellers with no marketplace badge show none | ☐ | ☐ |
+| DASH-10 | Lending → open requests, and a loan you are part of | Borrowers show "Reliable borrower", lenders "Helping hand" when they have them; unrelated badges (e.g. Study buddy) do not show there | ☐ | ☐ |
+| DASH-11 | As a project owner with a join request from a student who has "Team player" | The pill shows above the student's skills | ☐ | ☐ |
 
 ### 3.12 Robustness (ROB)
 
@@ -423,7 +440,7 @@ Fix blockers and majors before the usability study. Retest the failed ID and its
 | Layer | Result | Date | By |
 |---|---|---|---|
 | 1. Automated (CI green on the last PR) | | | |
-| 2. `php artisan app:e2e` (132/132) | | | |
+| 2. `php artisan app:e2e` (135/135) | | | |
 | 3. Manual, iPhone (all IDs ticked) | | | |
 | 3. Manual, Android (all IDs ticked) | | | |
 | 4. Deployment checklist | | | |

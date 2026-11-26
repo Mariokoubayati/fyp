@@ -31,7 +31,8 @@ export type NotificationType =
   | 'project_request_accepted'
   | 'project_request_declined'
   | 'project_team_full'
-  | 'project_deleted';
+  | 'project_deleted'
+  | 'badge_earned';
 
 export interface AppNotification {
   id: string;
@@ -49,6 +50,8 @@ export interface AppNotification {
     title?: string;
     starts_at?: string;
     location?: string;
+    badge?: string;
+    description?: string;
   };
   read_at: string | null;
   created_at: string;

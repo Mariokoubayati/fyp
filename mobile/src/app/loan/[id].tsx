@@ -12,6 +12,7 @@ import { Loading } from '@/components/Loading';
 import { Screen } from '@/components/Screen';
 import { nextStep, STATUS_LABELS, TIER_LABELS } from '@/lib/loans';
 import { colors, spacing, typography } from '@/theme';
+import { BadgeChips } from '@/components/BadgeChips';
 
 export default function LoanDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -70,11 +71,13 @@ export default function LoanDetail() {
             Borrower: {loan.borrower.name} · Trust {loan.borrower.trust_score} ({TIER_LABELS[loan.borrower.trust_tier]})
           </Text>
         ) : null}
+        <BadgeChips badges={loan.borrower?.badges} />
         {loan.lender ? (
           <Text style={styles.link} onPress={() => router.push(`/student/${loan.lender?.id}`)}>
             Lender: {loan.lender.name}
           </Text>
         ) : null}
+        <BadgeChips badges={loan.lender?.badges} />
       </Card>
 
       {loan.my_role === 'borrower' && loan.lender ? <MessageButton userId={loan.lender.id} title="Message the lender" /> : null}

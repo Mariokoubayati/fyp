@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Enums\Badge;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -44,11 +45,12 @@ class ProjectResource extends JsonResource
                 'name' => $member->name,
                 'major' => $member->major,
             ])->values()),
-            'requests' => $this->when($isOwner && $this->relationLoaded('requests'), fn () => $this->requests->map(fn (User $student): array => [
+            'requests' => $this->when($isOwner && $this->relationLoaded('requests'), fn () => $this->requests->loadMissing('badges')->map(fn (User $student): array => [
                 'id' => $student->id,
                 'name' => $student->name,
                 'major' => $student->major,
                 'skills' => $student->skills ?? [],
+                'badges' => Badge::shownFor($student, 'teammate'),
                 'message' => $student->pivot->message,
             ])->values()),
         ];
